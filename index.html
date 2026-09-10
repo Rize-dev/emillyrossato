@@ -841,127 +841,222 @@
             opacity: 1;
         }
 
-        .admin-screen {
+        /* LOGIN ADMIN */
+        .login-overlay {
             display: none;
-            min-height: 100vh;
-            background: #f3f4f6;
-            flex-direction: column;
-        }
-
-        #admin-login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 4000;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            background: linear-gradient(135deg, #FFF5F8 0%, #F8E8EE 100%);
         }
 
-        .login-card {
+        .login-overlay.active {
+            display: flex;
+        }
+
+        .login-box {
             background: white;
             padding: 40px;
             border-radius: 24px;
             text-align: center;
             max-width: 400px;
             width: 100%;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
         }
 
-        .login-card img {
-            max-width: 150px;
+        .login-box img {
+            max-width: 120px;
             margin-bottom: 20px;
         }
 
-        .login-card h2 {
+        .login-box h2 {
             font-family: 'Playfair Display', serif;
-            font-size: 1.6rem;
-            color: var(--dark);
             margin-bottom: 10px;
+            color: var(--dark);
         }
 
-        .login-card p {
+        .login-box p {
             color: var(--gray);
             font-size: 0.9rem;
             margin-bottom: 25px;
         }
 
-        .btn-google {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+        .login-input {
             width: 100%;
-            padding: 12px;
-            background: white;
+            padding: 14px;
             border: 2px solid #e5e7eb;
             border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            font-family: 'Poppins', sans-serif;
         }
 
-        .btn-google:hover {
+        .login-input:focus {
+            outline: none;
             border-color: var(--primary);
-            color: var(--primary);
         }
 
-        #admin-dashboard {
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .btn-login:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-cancel {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
             display: none;
+        }
+
+        /* DASHBOARD ADMIN */
+        .admin-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f3f4f6;
+            z-index: 4000;
+            overflow-y: auto;
             padding: 40px 20px;
+        }
+
+        .admin-overlay.active {
+            display: block;
+        }
+
+        .admin-container {
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .admin-header {
             background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
-        .admin-form {
+        .admin-header h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--primary);
+        }
+
+        .admin-card {
             background: white;
-            padding: 25px;
-            border-radius: 12px;
-            margin-bottom: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
-        .form-grid {
+        .admin-card h3 {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr auto;
             gap: 10px;
             align-items: end;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--dark);
         }
 
         .form-group input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
         }
 
-        .btn-add {
+        .agenda-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .agenda-input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-add, .btn-save {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 25px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover, .btn-save:hover {
+            background: var(--primary-dark);
         }
 
         .admin-list {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
+            display: grid;
+            gap: 12px;
         }
 
         .admin-item {
             background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
+            padding: 18px;
+            border-radius: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -969,27 +1064,51 @@
             gap: 10px;
         }
 
+        .admin-item-info strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .admin-item-info small {
+            color: var(--gray);
+        }
+
+        .admin-item-info .item-price {
+            color: var(--primary);
+            font-weight: 700;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+        }
+
         .btn-sm {
-            padding: 5px 12px;
+            padding: 8px 14px;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            margin-left: 5px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 500;
         }
 
         .btn-edit { background: var(--gold); color: white; }
         .btn-delete { background: #ef4444; color: white; }
+        .btn-back { background: var(--primary); color: white; }
+        .btn-logout { background: #6B7280; color: white; }
 
         @media (max-width: 768px) {
             .hero h1 { font-size: 2rem; }
             .section-title h2 { font-size: 2rem; }
-            .form-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
             .hero-logo { max-width: 280px; }
             .care-tips ul { grid-template-columns: 1fr; }
             .care-tips { padding: 30px 20px; }
             .modal-service-item { padding: 18px 20px; }
             .modal-service-title { font-size: 0.95rem; }
+            .agenda-input-group { flex-direction: column; align-items: stretch; }
         }
     </style>
 </head>
@@ -1110,101 +1229,98 @@
     </div>
 
     <!-- LINK ADMIN -->
-    <a href="#" class="admin-link" onclick="showAdmin(); return false;">
+    <a href="#" class="admin-link" onclick="openLogin(); return false;">
         <i class="fas fa-lock"></i> Admin
     </a>
 
-    <!-- TELA LOGIN ADMIN -->
-    <div id="admin-login-screen" class="admin-screen">
-        <div class="login-card">
-            <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
-            <h2>Painel Administrativo </h2>
-            <p>Faça login para gerenciar os serviços</p>
-            <button id="btnGoogleLogin" class="btn-google">
-                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                Entrar com Google
-            </button>
-            <p style="margin-top: 20px; font-size: 0.85rem;">
-                <a href="#" onclick="showMain(); return false;" style="color: var(--primary);">← Voltar ao site</a>
-            </p>
+    <!-- LOGIN ADMIN -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <img src="https://i.postimg.cc/jSX4xCBY/logo-emily-rossato-sem-fundo-removebg-preview.png" alt="Logo" onerror="this.style.display='none'">
+            <h2>Área Restrita</h2>
+            <p>Digite a senha para acessar o painel</p>
+            <div id="errorMsg" class="error-msg">Senha incorreta.</div>
+            <input type="password" id="senhaInput" class="login-input" placeholder="Senha..." onkeypress="if(event.key==='Enter') verificarSenha()">
+            <button onclick="verificarSenha()" class="btn-login"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+            <button onclick="closeLogin()" class="btn-cancel">← Voltar ao site</button>
         </div>
     </div>
 
     <!-- DASHBOARD ADMIN -->
-    <div id="admin-dashboard" class="admin-screen">
-        <div class="admin-header">
-            <h2 style="font-family: 'Playfair Display', serif; color: var(--primary);">
-                <i class="fas fa-cog"></i> Painel Admin
-            </h2>
-            <div>
-                <button onclick="showMain()" class="btn-sm" style="background: var(--primary); color: white; padding: 8px 15px;">
-                    <i class="fas fa-eye"></i> Ver Site
-                </button>
-                <button onclick="logout()" class="btn-sm btn-delete">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </button>
+    <div id="adminOverlay" class="admin-overlay">
+        <div class="admin-container">
+            <div class="admin-header">
+                <h2><i class="fas fa-cog"></i> Painel Administrativo</h2>
+                <div>
+                    <button onclick="fecharAdmin()" class="btn-sm btn-back"><i class="fas fa-eye"></i> Ver Site</button>
+                    <button onclick="sairAdmin()" class="btn-sm btn-logout"><i class="fas fa-sign-out-alt"></i> Sair</button>
+                </div>
             </div>
-        </div>
+            
+            <div class="admin-card">
+                <h3><i class="fas fa-link" style="color: var(--primary);"></i> Link do Google Agenda</h3>
+                <p style="color: var(--gray); font-size: 0.9rem; margin-bottom: 15px;">Cole aqui o link do seu agendamento do Google Calendar. Ele será aberto quando a cliente clicar em "Confirmar Agendamento".</p>
+                <div class="agenda-input-group">
+                    <input type="text" id="agendaLinkInput" placeholder="https://calendar.google.com/calendar/...">
+                    <button onclick="salvarAgenda()" class="btn-save"><i class="fas fa-save"></i> Salvar Link</button>
+                </div>
+            </div>
 
-        <div class="admin-form">
-            <h3 style="margin-bottom: 15px;">Adicionar Serviço</h3>
-            <form id="serviceForm" class="form-grid">
-                <div class="form-group">
-                    <input type="text" id="servNome" placeholder="Nome do serviço" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="servPreco" placeholder="Preço (ex: 170,00)" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="servDuracao" placeholder="Duração (ex: 1 h 40 min)" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="servDescricao" placeholder="Descrição (opcional)">
-                </div>
-                <button type="submit" class="btn-add">
-                    <i class="fas fa-plus"></i> Adicionar
-                </button>
-            </form>
-        </div>
+            <div class="admin-card">
+                <h3><i class="fas fa-plus-circle" style="color: var(--primary);"></i> Adicionar Serviço</h3>
+                <form id="serviceForm" class="form-row" onsubmit="adicionarServico(event)">
+                    <div class="form-group">
+                        <label>Nome do Serviço</label>
+                        <input type="text" id="servNome" placeholder="Ex: Alongamento F1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Preço (R$)</label>
+                        <input type="text" id="servPreco" placeholder="Ex: 170,00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Duração</label>
+                        <input type="text" id="servDuracao" placeholder="Ex: 1 h 40 min" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <input type="text" id="servDescricao" placeholder="Opcional">
+                    </div>
+                    <button type="submit" class="btn-add" style="margin-top: 22px;"><i class="fas fa-plus"></i> Adicionar</button>
+                </form>
+            </div>
 
-        <div class="admin-list" id="adminList">
-            <h3 style="margin-bottom: 15px;">Serviços Cadastrados</h3>
-            <p style="text-align: center; color: var(--gray);">Carregando...</p>
+            <div class="admin-card">
+                <h3><i class="fas fa-list" style="color: var(--primary);"></i> Serviços Cadastrados</h3>
+                <div id="adminList" class="admin-list"></div>
+            </div>
         </div>
     </div>
 
     <!-- FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-/* MODELO FIREBASE
-        const firebaseConfig = {
-            apiKey: "SUA_API_KEY_AQUI",
-            authDomain: "SEU_PROJETO.firebaseapp.com",
-            projectId: "SEU_PROJETO",
-            storageBucket: "SEU_PROJETO.appspot.com",
-            messagingSenderId: "SEU_SENDER_ID",
-            appId: "SEU_APP_ID"
-        };
-*/
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCBncBZXFWR3zHepJ6qmYyDs5EHkvsChmQ",
-  authDomain: "eminails-58f2a.firebaseapp.com",
-  projectId: "eminails-58f2a",
-  storageBucket: "eminails-58f2a.firebasestorage.app",
-  messagingSenderId: "901930625914",
-  appId: "1:901930625914:web:b85633a9007eaae0b784c3",
-  measurementId: "G-9LP0CE950R"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBncBZXFWR3zHepJ6qmYyDs5EHkvsChmQ",
+            authDomain: "eminails-58f2a.firebaseapp.com",
+            projectId: "eminails-58f2a",
+            storageBucket: "eminails-58f2a.firebasestorage.app",
+            messagingSenderId: "901930625914",
+            appId: "1:901930625914:web:b85633a9007eaae0b784c3",
+            measurementId: "G-9LP0CE950R"
+        };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
 
-        let currentUser = null;
+        // ============================================
+        // CONFIGURAÇÕES DE SEGURANÇA (MUDE AQUI)
+        // ============================================
+        const SENHA_DO_PAINEL = "emilly2025"; // Senha para entrar no painel
+        const CHAVE_SECRETA = "EmillyNails2025!"; // A MESMA que você colocou nas Regras do Firebase
+
+        let linkAgendaGlobal = "https://calendar.google.com/calendar/appointments/schedules/SEU_LINK_AQUI?gv=true";
 
         const servicosIniciais = [
             { nome: "APLICAÇÃO ALONGAMENTO DE GEL ENCAPSULADO 🦋", preco: "170,00", duracao: "1 h 40 min", descricao: "" },
@@ -1213,53 +1329,21 @@ const firebaseConfig = {
             { nome: "APLICAÇÃO DE FIBRA DE VIDRO TRADICIONAL 🦋", preco: "175,00", duracao: "1 h 40 min", descricao: "" },
             { nome: "BANHO DE GEL ENCAPSULADO", preco: "120,00", duracao: "1 h 30 min", descricao: "" },
             { nome: "BANHO DE GEL NOS PÉS 🦋", preco: "90,00", duracao: "1 h", descricao: "" },
-            { nome: "BANHO DE GEL TRADICIONAL ", preco: "115,00", duracao: "1 h 30 min", descricao: "" },
+            { nome: "BANHO DE GEL TRADICIONAL", preco: "115,00", duracao: "1 h 30 min", descricao: "" },
             { nome: "Concerto 🦋", preco: "10,00", duracao: "10 min", descricao: "" }
         ];
 
-        window.showMain = () => {
-            document.querySelector('.hero').style.display = 'flex';
-            document.querySelector('.services-section').style.display = 'block';
-            document.querySelector('.gallery-section').style.display = 'block';
-            document.querySelector('.footer').style.display = 'block';
-            document.getElementById('admin-login-screen').style.display = 'none';
-            document.getElementById('admin-dashboard').style.display = 'none';
-            document.querySelector('.admin-link').style.display = 'block';
+        // Funções de Interface
+        window.openModal = () => { 
+            document.getElementById('servicesModal').classList.add('active'); 
+            document.body.style.overflow = 'hidden'; 
+            carregarDados(); 
         };
-
-        window.showAdmin = () => {
-            if (currentUser) {
-                document.getElementById('admin-dashboard').style.display = 'block';
-                document.querySelector('.hero').style.display = 'none';
-                document.querySelector('.services-section').style.display = 'none';
-                document.querySelector('.gallery-section').style.display = 'none';
-                document.querySelector('.footer').style.display = 'none';
-                document.querySelector('.admin-link').style.display = 'none';
-                loadServices();
-            } else {
-                document.getElementById('admin-login-screen').style.display = 'flex';
-                document.querySelector('.hero').style.display = 'none';
-                document.querySelector('.services-section').style.display = 'none';
-                document.querySelector('.gallery-section').style.display = 'none';
-                document.querySelector('.footer').style.display = 'none';
-                document.querySelector('.admin-link').style.display = 'none';
-            }
+        
+        window.closeModal = () => { 
+            document.getElementById('servicesModal').classList.remove('active'); 
+            document.body.style.overflow = 'auto'; 
         };
-
-        window.openModal = () => {
-            document.getElementById('servicesModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-            loadModalServices();
-        };
-
-        window.closeModal = () => {
-            document.getElementById('servicesModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
-        };
-
-        document.getElementById('servicesModal').addEventListener('click', (e) => {
-            if (e.target.id === 'servicesModal') closeModal();
-        });
 
         window.confirmarAgendamento = () => {
             const selected = document.querySelector('input[name="servico"]:checked');
@@ -1267,65 +1351,71 @@ const firebaseConfig = {
                 alert('Por favor, selecione um serviço.');
                 return;
             }
-            alert(`Serviço selecionado: ${selected.value}\n\nEm breve entraremos em contato para confirmar seu horário!`);
+            // Abre o link da agenda salvo
+            if (linkAgendaGlobal && linkAgendaGlobal !== "https://calendar.google.com/calendar/appointments/schedules/SEU_LINK_AQUI?gv=true") {
+                window.open(linkAgendaGlobal, '_blank');
+            } else {
+                alert('Agenda ainda não configurada. Entre em contato pelo WhatsApp!');
+            }
             closeModal();
         };
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                if (document.getElementById('admin-login-screen').style.display === 'flex') {
-                    showAdmin();
-                }
+        window.openLogin = () => { 
+            document.getElementById('loginOverlay').classList.add('active'); 
+            document.getElementById('senhaInput').value = ''; 
+            document.getElementById('errorMsg').style.display = 'none'; 
+        };
+        
+        window.closeLogin = () => { 
+            document.getElementById('loginOverlay').classList.remove('active'); 
+        };
+        
+        window.verificarSenha = () => {
+            if (document.getElementById('senhaInput').value === SENHA_DO_PAINEL) {
+                closeLogin();
+                document.getElementById('adminOverlay').classList.add('active');
+                carregarDados();
             } else {
-                currentUser = null;
+                document.getElementById('errorMsg').style.display = 'block';
             }
-        });
-
-        document.getElementById('btnGoogleLogin').addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch((error) => {
-                alert("Erro: " + error.message);
-            });
-        });
-
-        window.logout = () => {
-            signOut(auth);
-            showMain();
         };
 
-        function createServiceHTML(service, index) {
-            return `
-                <div class="modal-service-item">
-                    <div class="modal-service-content">
-                        <div class="modal-service-title">${service.nome}</div>
-                        <div class="modal-service-info">
-                            <span class="modal-service-price">R$ ${service.preco}</span>
-                            <span class="modal-service-duration">${service.duracao}</span>
-                        </div>
-                        <span class="modal-service-link">Ler mais...</span>
-                    </div>
-                    <div class="modal-service-radio">
-                        <input type="radio" name="servico" value="${service.nome}" id="servico-${index}">
-                    </div>
-                </div>
-            `;
-        }
+        window.fecharAdmin = () => { 
+            document.getElementById('adminOverlay').classList.remove('active'); 
+            document.body.style.overflow = 'auto'; 
+            carregarDados(); 
+        };
+        
+        window.sairAdmin = () => { 
+            if(confirm('Deseja sair?')) fecharAdmin(); 
+        };
 
-        async function loadServices() {
+        // Carregar Dados do Firebase
+        async function carregarDados() {
             try {
+                // 1. Carregar Link da Agenda
+                const configDoc = await getDoc(doc(db, "configuracoes", "site_settings"));
+                if (configDoc.exists()) {
+                    linkAgendaGlobal = configDoc.data().linkAgenda || linkAgendaGlobal;
+                    if(document.getElementById('agendaLinkInput')) {
+                        document.getElementById('agendaLinkInput').value = linkAgendaGlobal;
+                    }
+                }
+
+                // 2. Carregar Serviços
                 const snapshot = await getDocs(collection(db, "servicos"));
                 const modalServices = document.getElementById('modalServices');
                 const adminList = document.getElementById('adminList');
                 
-                modalServices.innerHTML = '';
-                adminList.innerHTML = '<h3 style="margin-bottom: 15px;">Serviços Cadastrados</h3>';
+                if (modalServices) modalServices.innerHTML = '';
+                if (adminList) adminList.innerHTML = '<h3 style="margin-bottom: 15px;">Serviços Cadastrados</h3>';
 
                 let services = [];
 
                 if (snapshot.empty) {
                     services = servicosIniciais;
                     for (const servico of servicosIniciais) {
-                        await addDoc(collection(db, "servicos"), servico);
+                        await addDoc(collection(db, "servicos"), { ...servico, chaveSecreta: CHAVE_SECRETA });
                     }
                 } else {
                     snapshot.forEach((doc) => {
@@ -1333,25 +1423,42 @@ const firebaseConfig = {
                     });
                 }
 
-                modalServices.innerHTML = `<div class="modal-services-list">` +
-                    services.map((service, index) => createServiceHTML(service, index)).join('') +
-                    `</div>`;
+                // Renderizar no Modal
+                if (modalServices) {
+                    modalServices.innerHTML = `<div class="modal-services-list">` +
+                        services.map((service, index) => `
+                            <div class="modal-service-item">
+                                <div class="modal-service-content">
+                                    <div class="modal-service-title">${service.nome}</div>
+                                    <div class="modal-service-info">
+                                        <span class="modal-service-price">R$ ${service.preco}</span>
+                                        <span class="modal-service-duration">${service.duracao}</span>
+                                    </div>
+                                    ${service.descricao ? `<span class="modal-service-link">${service.descricao}</span>` : ''}
+                                </div>
+                                <div class="modal-service-radio">
+                                    <input type="radio" name="servico" value="${service.nome}" id="servico-${index}">
+                                </div>
+                            </div>
+                        `).join('') +
+                        `</div>`;
+                }
 
-                if (currentUser) {
+                // Renderizar no Admin
+                if (adminList) {
                     services.forEach((service) => {
                         adminList.innerHTML += `
                             <div class="admin-item">
-                                <div style="flex: 1;">
+                                <div class="admin-item-info">
                                     <strong>${service.nome}</strong>
-                                    <p style="font-size: 0.85rem; color: var(--gray); margin-top: 5px;">
-                                        R$ ${service.preco} • ${service.duracao}
-                                    </p>
+                                    <small>${service.duracao}</small>
+                                    <span class="item-price">R$ ${service.preco}</span>
                                 </div>
-                                <div>
-                                    <button onclick="editService('${service.id}', '${service.nome}', '${service.preco}', '${service.duracao}')" class="btn-sm btn-edit">
+                                <div class="admin-actions">
+                                    <button onclick="editarServico('${service.id}', '${service.nome}', '${service.preco}', '${service.duracao}', '${service.descricao || ''}')" class="btn-sm btn-edit">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button onclick="deleteService('${service.id}')" class="btn-sm btn-delete">
+                                    <button onclick="excluirServico('${service.id}')" class="btn-sm btn-delete">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -1360,46 +1467,82 @@ const firebaseConfig = {
                     });
                 }
             } catch (error) {
-                console.error("Erro:", error);
+                console.error("Erro ao carregar:", error);
             }
         }
+        window.carregarDados = carregarDados;
 
-        window.loadModalServices = loadServices;
-        window.loadServices = loadServices;
+        // Salvar Link da Agenda
+        window.salvarAgenda = async () => {
+            const novoLink = document.getElementById('agendaLinkInput').value;
+            if(!novoLink) return alert("Cole o link primeiro!");
+            
+            try {
+                await setDoc(doc(db, "configuracoes", "site_settings"), {
+                    linkAgenda: novoLink,
+                    chaveSecreta: CHAVE_SECRETA
+                });
+                linkAgendaGlobal = novoLink;
+                alert("Link da agenda atualizado com sucesso!");
+            } catch (error) {
+                alert("Erro ao salvar. Verifique as regras do Firebase.");
+            }
+        };
 
-        document.getElementById('serviceForm').addEventListener('submit', async (e) => {
+        // Adicionar Serviço
+        window.adicionarServico = async (e) => {
             e.preventDefault();
             const nome = document.getElementById('servNome').value;
             const preco = document.getElementById('servPreco').value;
             const duracao = document.getElementById('servDuracao').value;
             const descricao = document.getElementById('servDescricao').value;
 
-            await addDoc(collection(db, "servicos"), { nome, preco, duracao, descricao });
-            document.getElementById('serviceForm').reset();
-            loadServices();
-            alert("Serviço adicionado!");
-        });
-
-        window.editService = async (id, nome, preco, duracao) => {
-            const newNome = prompt("Novo nome:", nome);
-            if (!newNome) return;
-            const newPreco = prompt("Novo preço (ex: 170,00):", preco);
-            if (!newPreco) return;
-            const newDuracao = prompt("Nova duração (ex: 1 h 40 min):", duracao);
-            if (!newDuracao) return;
-
-            await updateDoc(doc(db, "servicos", id), {
-                nome: newNome,
-                preco: newPreco,
-                duracao: newDuracao
-            });
-            loadServices();
+            try {
+                await addDoc(collection(db, "servicos"), { 
+                    nome, preco, duracao, descricao, 
+                    chaveSecreta: CHAVE_SECRETA 
+                });
+                document.getElementById('serviceForm').reset();
+                carregarDados();
+                alert('Serviço adicionado!');
+            } catch (error) { 
+                alert('Erro ao adicionar. Verifique as regras do Firebase.'); 
+            }
         };
 
-        window.deleteService = async (id) => {
-            if (confirm("Excluir este serviço?")) {
+        // Editar Serviço
+        window.editarServico = async (id, nome, preco, duracao, descricao) => {
+            const newNome = prompt("Novo nome:", nome);
+            if (!newNome) return;
+            const newPreco = prompt("Novo preço:", preco);
+            if (!newPreco) return;
+            const newDuracao = prompt("Nova duração:", duracao);
+            if (!newDuracao) return;
+            const newDesc = prompt("Nova descrição:", descricao);
+            if (newDesc === null) return;
+
+            try {
+                await updateDoc(doc(db, "servicos", id), {
+                    nome: newNome,
+                    preco: newPreco,
+                    duracao: newDuracao,
+                    descricao: newDesc,
+                    chaveSecreta: CHAVE_SECRETA
+                });
+                carregarDados();
+            } catch (error) { 
+                alert('Erro ao editar.'); 
+            }
+        };
+
+        // Excluir Serviço
+        window.excluirServico = async (id) => {
+            if (!confirm("Excluir este serviço?")) return;
+            try {
                 await deleteDoc(doc(db, "servicos", id));
-                loadServices();
+                carregarDados();
+            } catch (error) { 
+                alert('Erro ao excluir.'); 
             }
         };
 
@@ -1414,7 +1557,8 @@ const firebaseConfig = {
 
         document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-        loadServices();
+        // Inicializar
+        carregarDados();
     </script>
 </body>
 </html>
