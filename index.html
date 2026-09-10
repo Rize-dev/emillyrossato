@@ -1178,7 +1178,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+/* MODELO FIREBASE
         const firebaseConfig = {
             apiKey: "SUA_API_KEY_AQUI",
             authDomain: "SEU_PROJETO.firebaseapp.com",
@@ -1187,6 +1187,17 @@
             messagingSenderId: "SEU_SENDER_ID",
             appId: "SEU_APP_ID"
         };
+*/
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCBncBZXFWR3zHepJ6qmYyDs5EHkvsChmQ",
+  authDomain: "eminails-58f2a.firebaseapp.com",
+  projectId: "eminails-58f2a",
+  storageBucket: "eminails-58f2a.firebasestorage.app",
+  messagingSenderId: "901930625914",
+  appId: "1:901930625914:web:b85633a9007eaae0b784c3",
+  measurementId: "G-9LP0CE950R"
+};
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
