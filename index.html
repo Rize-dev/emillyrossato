@@ -9,7 +9,153 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
+/*----------------------------supabase----------------------------*/
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script type="module">
+    // Inicialização do Supabase
+    const SUPABASE_URL = "https://SEU_PROJETO.supabase.co";
+    const SUPABASE_ANON_KEY = "SUA_CHAVE_ANON";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ... (mantenha toda a lógica de UI, abas e a função verificarSenha da Vercel que já funciona) ...
+
+    // ===== CARREGAR DADOS =====
+    async function carregarDados() {
+        // 1. Configurações (Agenda)
+        const { data: configData } = await supabase
+            .from('configuracoes')
+            .select('valor')
+            .eq('chave', 'agenda_link')
+            .single();
+        
+        if (configData) {
+            linkAgendaGlobal = configData.valor;
+            document.getElementById('agendaLinkInput').value = linkAgendaGlobal;
+        }
+
+        // 2. Conteúdo Editável (Hero, Cuidados)
+        const { data: conteudoData } = await supabase
+            .from('configuracoes')
+            .select('valor')
+            .eq('chave', 'conteudo_principal')
+            .single();
+
+        let conteudo = conteudoData ? JSON.parse(conteudoData.valor) : conteudoPadrao;
+        
+        // Preenche os inputs do admin com os dados (mesma lógica de antes)
+        document.getElementById('edit-hero-titulo').value = conteudo.hero.titulo;
+        // ... (resto dos campos)
+
+        dicasAtuais = [...(conteudo.cuidados.dicas || [])];
+        renderizarDicasAdmin();
+        carregarConteudoSite(conteudo);
+
+        // 3. Galeria
+        const { data: galeriaData, error: galeriaError } = await supabase
+            .from('galeria')
+            .select('id, url')
+            .order('created_at', { ascending: false });
+
+        const galeriaGrid = document.getElementById('galeriaGrid');
+        const adminGaleria = document.getElementById('adminGaleriaList');
+        galeriaGrid.innerHTML = ''; adminGaleria.innerHTML = '';
+
+        if (!galeriaData || galeriaData.length === 0) {
+            galeriaGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--gray); padding: 40px;">Nenhuma foto ainda.</p>';
+        } else {
+            galeriaData.forEach(foto => {
+                galeriaGrid.innerHTML += `<div class="gallery-item fade-in visible"><img src="${foto.url}" alt="Trabalho"></div>`;
+                adminGaleria.innerHTML += `
+                    <div class="admin-item">
+                        <img src="${foto.url}">
+                        <small style="color: var(--gray); word-break: break-all; flex: 1;">${foto.url}</small>
+                        <button onclick="excluirFoto('${foto.id}')" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button>
+                    </div>`;
+            });
+        }
+
+        // 4. Serviços (Mesma lógica de fetch, substituindo Firebase por Supabase)
+        const { data: servicosData } = await supabase.from('servicos').select('*').order('created_at', { ascending: true });
+        // ... (renderização dos serviços no modal e no admin, idêntica à anterior)
+    }
+
+    // ===== UPLOAD DE IMAGEM (Supabase Storage) =====
+    window.adicionarFoto = async () => {
+        const fileInput = document.getElementById('fotoFile');
+        const file = fileInput.files[0];
+        if (!file) return alert("Selecione uma imagem.");
+
+        const btn = document.getElementById('btnAddFoto');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        btn.disabled = true;
+
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const filePath = `galeria/${fileName}`;
+
+            // Upload para o Storage
+            const { error: uploadError } = await supabase.storage
+                .from('imagens')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            // Pegar URL pública
+            const { data: { publicUrl } } = supabase.storage
+                .from('imagens')
+                .getPublicUrl(filePath);
+
+            // Salvar referência no Banco
+            const { error: dbError } = await supabase
+                .from('galeria')
+                .insert({ url: publicUrl });
+
+            if (dbError) throw dbError;
+
+            fileInput.value = '';
+            document.getElementById('fileButtonLabel').innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Clique para selecionar uma foto';
+            carregarDados();
+            alert("Foto enviada com sucesso!");
+        } catch (error) {
+            console.error("Erro no upload:", error);
+            alert("Erro ao enviar a imagem.");
+        } finally {
+            btn.innerHTML = '<i class="fas fa-plus"></i> Enviar Foto';
+            btn.disabled = false;
+        }
+    };
+
+    // ===== SALVAR CONTEÚDO (Exemplo Hero) =====
+    window.salvarHero = async () => {
+        const novoConteudo = {
+            hero: {
+                titulo: document.getElementById('edit-hero-titulo').value,
+                subtitulo: document.getElementById('edit-hero-subtitulo').value,
+                botao: document.getElementById('edit-hero-botao').value
+            },
+            // ... manter os outros campos (cuidados, etc)
+        };
+
+        // Upsert na tabela de configurações
+        await supabase.from('configuracoes').upsert({ 
+            chave: 'conteudo_principal', 
+            valor: JSON.stringify(novoConteudo) 
+        });
+        
+        carregarConteudoSite(novoConteudo);
+        alert("Hero atualizado!");
+    };
+
+    // Inicializar
+    carregarDados();
+</script>
+
+/*----------------------------supabase----------------------------*/
+
+
     <style>
         :root {
             --primary: #C4587A;
