@@ -9,454 +9,79 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script type="module">
-    // Inicialização do Supabase
-    const SUPABASE_URL = "https://axviasxqylwbutrbggun.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_oINRe3-E6BDYdpNftspxlA_OGYVSi6u";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // ... (mantenha toda a lógica de UI, abas e a função verificarSenha da Vercel que já funciona) ...
-
-// ===== DADOS PADRÃO (Declaração Global) =====
-const conteudoPadrao = {
-    hero: {
-        titulo: "Unhas Perfeitas, Confiança Inabalável",
-        subtitulo: "Especialista em Alongamento em Molde F1 e Fibra de Vidro com acabamento impecável",
-        botao: "Agende seu horário"
-    },
-    cuidados: {
-        titulo: "Dicas Essenciais",
-        subtitulo: "💅 Cuidados com suas Unhas",
-        dicas: [
-            "Não bater, roer ou forçar as unhas.",
-            "Evite usar as unhas como ferramentas.",
-            "Faça manutenção a cada 2 ou 4 semanas para prevenir fungos e bactérias.",
-            "Mantenha as unhas limpas e secas.",
-            "Não puxar nem tentar remover o alongamento em casa."
-        ],
-        ctaTexto: "✨ Quer conhecer todos os serviços e valores disponíveis? ✨",
-        ctaBotao: "Ver Lista de Serviços"
-    }
-};
-
-// ... (aqui vem a função carregarDados que usa essa variável)
-async function carregarDados() { ... }
-
-    // ===== CARREGAR DADOS =====
-    async function carregarDados() {
-    // 1. Configurações (Agenda)
-    const { data: configAgenda } = await supabase
-        .from('configuracoes')
-        .select('valor')
-        .eq('chave', 'agenda_link')
-        .maybeSingle(); // <-- Mudança aqui
     
-    if (configAgenda) {
-        linkAgendaGlobal = configAgenda.valor;
-        document.getElementById('agendaLinkInput').value = linkAgendaGlobal;
-    }
-
-    // 2. Conteúdo Editável (Hero, Cuidados)
-    const { data: configConteudo } = await supabase
-        .from('configuracoes')
-        .select('valor')
-        .eq('chave', 'conteudo_principal')
-        .maybeSingle(); // <-- Mudança aqui
-
-    let conteudo = conteudoPadrao;
-    if (configConteudo) {
-        try {
-            conteudo = JSON.parse(configConteudo.valor);
-        } catch (e) {
-            console.error("Erro ao parsear conteúdo:", e);
-        }
-    } else {
-        // Se não existir, salva o padrão pela primeira vez
-        await supabase.from('configuracoes').insert({ 
-            chave: 'conteudo_principal', 
-            valor: JSON.stringify(conteudoPadrao) 
-        });
-    }
-    
-    // Preenche os inputs do admin
-    document.getElementById('edit-hero-titulo').value = conteudo.hero?.titulo || '';
-    document.getElementById('edit-hero-subtitulo').value = conteudo.hero?.subtitulo || '';
-    document.getElementById('edit-hero-botao').value = conteudo.hero?.botao || '';
-    document.getElementById('edit-cuidados-titulo').value = conteudo.cuidados?.titulo || '';
-    document.getElementById('edit-cuidados-subtitulo').value = conteudo.cuidados?.subtitulo || '';
-    document.getElementById('edit-cta-texto').value = conteudo.cuidados?.ctaTexto || '';
-    document.getElementById('edit-cta-botao').value = conteudo.cuidados?.ctaBotao || '';
-    
-    dicasAtuais = [...(conteudo.cuidados?.dicas || [])];
-    renderizarDicasAdmin();
-    carregarConteudoSite(conteudo);
-
-    // 3. Galeria
-    const { data: galeriaData } = await supabase
-        .from('galeria')
-        .select('id, url')
-        .order('created_at', { ascending: false });
-
-    const galeriaGrid = document.getElementById('galeriaGrid');
-    const adminGaleria = document.getElementById('adminGaleriaList');
-    galeriaGrid.innerHTML = ''; 
-    adminGaleria.innerHTML = '';
-
-    if (!galeriaData || galeriaData.length === 0) {
-        galeriaGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--gray); padding: 40px;">Nenhuma foto ainda. Adicione pelo Admin!</p>';
-        adminGaleria.innerHTML = '<p style="text-align: center; color: var(--gray);">Nenhuma foto cadastrada.</p>';
-    } else {
-        galeriaData.forEach(foto => {
-            galeriaGrid.innerHTML += `<div class="gallery-item fade-in visible"><img src="${foto.url}" alt="Trabalho"></div>`;
-            adminGaleria.innerHTML += `
-                <div class="admin-item">
-                    <img src="${foto.url}">
-                    <small style="color: var(--gray); word-break: break-all; flex: 1;">${foto.url}</small>
-                    <button onclick="excluirFoto('${foto.id}')" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button>
-                </div>`;
-        });
-    }
-
-    // 4. Serviços
-    const { data: servicosData } = await supabase
-        .from('servicos')
-        .select('*')
-        .order('created_at', { ascending: true });
-
-    const modalServ = document.getElementById('modalServices');
-    const adminServ = document.getElementById('adminServicosList');
-    modalServ.innerHTML = ''; 
-    adminServ.innerHTML = '';
-
-    let servicos = servicosData || [];
-    
-    if (servicos.length === 0) {
-        // Insere os serviços iniciais se a tabela estiver vazia
-        const iniciais = [
-            { nome: "APLICAÇÃO ALONGAMENTO DE GEL ENCAPSULADO", preco: "170,00", duracao: "1 h 40 min", descricao: "" },
-            { nome: "APLICAÇÃO ALONGAMENTO DE GEL TRADICIONAL", preco: "165,00", duracao: "1 h 30 min", descricao: "" },
-            { nome: "APLICAÇÃO DE FIBRA DE VIDRO ENCAPSULADO", preco: "180,00", duracao: "1 h 55 min", descricao: "" },
-            { nome: "APLICAÇÃO DE FIBRA DE VIDRO TRADICIONAL", preco: "175,00", duracao: "1 h 40 min", descricao: "" },
-            { nome: "BANHO DE GEL ENCAPSULADO", preco: "120,00", duracao: "1 h 30 min", descricao: "" },
-            { nome: "BANHO DE GEL NOS PÉS", preco: "90,00", duracao: "1 h", descricao: "" },
-            { nome: "BANHO DE GEL TRADICIONAL", preco: "115,00", duracao: "1 h 30 min", descricao: "" },
-            { nome: "Concerto", preco: "10,00", duracao: "10 min", descricao: "" }
-        ];
-        await supabase.from('servicos').insert(iniciais);
-        servicos = iniciais;
-    }
-
-    modalServ.innerHTML = servicos.map(s => `
-        <div class="modal-service-item">
-            <div class="modal-service-content">
-                <div class="modal-service-title">${s.nome}</div>
-                <div class="modal-service-info">
-                    <span class="modal-service-price">R$ ${s.preco}</span>
-                    <span class="modal-service-duration">🕐 ${s.duracao}</span>
-                </div>
-            </div>
-            <div><input type="radio" name="servico" value="${s.nome}"></div>
-        </div>
-    `).join('');
-
-    adminServ.innerHTML = servicos.map(s => `
-        <div class="admin-item">
-            <div style="flex: 1;">
-                <strong>${s.nome}</strong><br>
-                <small style="color: var(--gray);">R$ ${s.preco} • ${s.duracao}</small>
-            </div>
-            <div>
-                <button onclick="editarServico('${s.id}','${s.nome}','${s.preco}','${s.duracao}')" class="btn-sm btn-edit"><i class="fas fa-edit"></i></button>
-                <button onclick="excluirServico('${s.id}')" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Atualiza o site com o conteúdo
-function carregarConteudoSite(conteudo) {
-    if (!conteudo) return;
-    document.getElementById('hero-titulo').textContent = conteudo.hero?.titulo || '';
-    document.getElementById('hero-subtitulo').textContent = conteudo.hero?.subtitulo || '';
-    document.getElementById('hero-botao').textContent = conteudo.hero?.botao || '';
-    document.getElementById('cuidados-titulo').textContent = conteudo.cuidados?.titulo || '';
-    document.getElementById('cuidados-subtitulo').innerHTML = conteudo.cuidados?.subtitulo || '';
-    document.getElementById('cta-texto').textContent = conteudo.cuidados?.ctaTexto || '';
-    document.getElementById('cta-botao').textContent = conteudo.cuidados?.ctaBotao || '';
-    
-    const lista = document.getElementById('cuidados-lista');
-    lista.innerHTML = (conteudo.cuidados?.dicas || []).map(d => `<li><i class="fas fa-check-circle"></i> ${d}</li>`).join('');
-}
-
-    // ===== SALVAR CONTEÚDO (Exemplo Hero) =====
-    window.salvarHero = async () => {
-        const novoConteudo = {
-            hero: {
-                titulo: document.getElementById('edit-hero-titulo').value,
-                subtitulo: document.getElementById('edit-hero-subtitulo').value,
-                botao: document.getElementById('edit-hero-botao').value
-            },
-            // ... manter os outros campos (cuidados, etc)
-        };
-
-        // Upsert na tabela de configurações
-        await supabase.from('configuracoes').upsert({ 
-            chave: 'conteudo_principal', 
-            valor: JSON.stringify(novoConteudo) 
-        });
-        
-        carregarConteudoSite(novoConteudo);
-        alert("Hero atualizado!");
-    };
-
-    // Inicializar
-    carregarDados();
-</script>
-
-
+    <!-- SDK do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
-            --primary: #C4587A;
-            --primary-dark: #9B3A5C;
-            --primary-light: #E8A0B8;
-            --secondary: #F8E8EE;
-            --gold: #D4A574;
-            --gold-light: #E8C9A8;
-            --dark: #2D2D2D;
-            --light: #FFFFFF;
-            --gray: #6B7280;
-            --light-gray: #f5f5f5;
+            --primary: #C4587A; --primary-dark: #9B3A5C; --primary-light: #E8A0B8;
+            --secondary: #F8E8EE; --gold: #D4A574; --dark: #2D2D2D; --light: #FFFFFF;
+            --gray: #6B7280; --light-gray: #f5f5f5;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            color: var(--dark); 
-            line-height: 1.6; 
-            overflow-x: hidden; 
-            background: var(--light);
-        }
+        body { font-family: 'Poppins', sans-serif; color: var(--dark); line-height: 1.6; overflow-x: hidden; background: var(--light); }
 
         .fade-in { opacity: 0; transform: translateY(30px); transition: all 0.8s ease; }
         .fade-in.visible { opacity: 1; transform: translateY(0); }
         .divider { width: 80px; height: 3px; background: linear-gradient(90deg, var(--primary), var(--gold)); margin: 15px auto; border-radius: 50px; }
 
         /* HERO */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #FFF5F8 0%, #F8E8EE 50%, #FDE8F0 100%);
-            padding: 40px 20px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -10%; right: -5%;
-            width: 400px; height: 400px;
-            background: radial-gradient(circle, rgba(196,88,122,0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: -10%; left: -5%;
-            width: 350px; height: 350px;
-            background: radial-gradient(circle, rgba(212,165,116,0.08) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: float 8s ease-in-out infinite reverse;
-        }
+        .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #FFF5F8 0%, #F8E8EE 50%, #FDE8F0 100%); padding: 40px 20px; text-align: center; position: relative; overflow: hidden; }
+        .hero::before { content: ''; position: absolute; top: -10%; right: -5%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(196,88,122,0.1) 0%, transparent 70%); border-radius: 50%; animation: float 6s ease-in-out infinite; }
+        .hero::after { content: ''; position: absolute; bottom: -10%; left: -5%; width: 350px; height: 350px; background: radial-gradient(circle, rgba(212,165,116,0.08) 0%, transparent 70%); border-radius: 50%; animation: float 8s ease-in-out infinite reverse; }
         @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(20px, -20px); } }
-
-        .hero-logo {
-            max-width: 350px; width: 90%;
-            margin-bottom: 40px;
-            animation: fadeInDown 1s ease;
-            filter: drop-shadow(0 10px 30px rgba(196,88,122,0.15));
-            position: relative; z-index: 2;
-        }
+        .hero-logo { max-width: 350px; width: 90%; margin-bottom: 40px; animation: fadeInDown 1s ease; filter: drop-shadow(0 10px 30px rgba(196,88,122,0.15)); position: relative; z-index: 2; }
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-
-        .hero h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 3rem; color: var(--dark);
-            margin-bottom: 20px; font-weight: 700;
-            animation: fadeIn 1.2s ease;
-            position: relative; z-index: 2;
-            letter-spacing: -0.5px;
-        }
-        .hero h1::after {
-            content: ''; display: block;
-            color: var(--gold); font-size: 1.5rem;
-            margin-top: 10px;
-            animation: sparkle 2s ease-in-out infinite;
-        }
-        @keyframes sparkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.2); } }
-
-        .hero p {
-            font-size: 1.15rem; color: var(--gray);
-            margin-bottom: 40px; max-width: 600px;
-            animation: fadeIn 1.4s ease;
-            position: relative; z-index: 2; font-weight: 300;
-        }
+        .hero h1 { font-family: 'Playfair Display', serif; font-size: 3rem; color: var(--dark); margin-bottom: 20px; font-weight: 700; animation: fadeIn 1.2s ease; position: relative; z-index: 2; }
+        .hero p { font-size: 1.15rem; color: var(--gray); margin-bottom: 40px; max-width: 600px; animation: fadeIn 1.4s ease; position: relative; z-index: 2; font-weight: 300; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .btn-primary {
-            display: inline-flex; align-items: center; gap: 12px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white; padding: 18px 45px; border-radius: 50px;
-            font-weight: 600; font-size: 1.1rem;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 25px rgba(196,88,122,0.3);
-            border: none; cursor: pointer;
-            animation: fadeIn 1.6s ease;
-            position: relative; z-index: 2; overflow: hidden;
-        }
+        .btn-primary { display: inline-flex; align-items: center; gap: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 18px 45px; border-radius: 50px; font-weight: 600; font-size: 1.1rem; transition: all 0.4s; box-shadow: 0 8px 25px rgba(196,88,122,0.3); border: none; cursor: pointer; animation: fadeIn 1.6s ease; position: relative; z-index: 2; }
         .btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 40px rgba(196,88,122,0.4); }
-
-        .scroll-indicator {
-            position: absolute; bottom: 30px; left: 50%;
-            transform: translateX(-50%);
-            animation: bounce 2s infinite;
-            color: var(--primary); font-size: 1.5rem; z-index: 2;
-        }
+        .scroll-indicator { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); animation: bounce 2s infinite; color: var(--primary); font-size: 1.5rem; z-index: 2; }
         @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-10px); } }
 
         /* SEÇÕES */
         .services-section { padding: 100px 20px; background: white; }
         .container { max-width: 1000px; margin: 0 auto; }
         .section-title { text-align: center; margin-bottom: 50px; }
-        .section-title .tag {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--secondary) 0%, #FDE8F0 100%);
-            color: var(--primary); padding: 8px 24px; border-radius: 50px;
-            font-size: 0.85rem; font-weight: 600;
-            text-transform: uppercase; letter-spacing: 2px;
-            margin-bottom: 15px;
-        }
-        .section-title h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.8rem; color: var(--dark);
-            margin-bottom: 10px; font-weight: 700;
-        }
-
-        .care-tips {
-            background: linear-gradient(135deg, #FFF9FB 0%, var(--secondary) 100%);
-            border-radius: 24px; padding: 45px 40px;
-            margin-bottom: 50px;
-            border: 1px solid rgba(196,88,122,0.1);
-            box-shadow: 0 20px 60px rgba(196,88,122,0.08);
-            position: relative; overflow: hidden;
-        }
-        .care-tips::before {
-            content: ''; position: absolute;
-            top: 0; left: 0; width: 5px; height: 100%;
-            background: linear-gradient(180deg, var(--primary), var(--gold));
-        }
-        .care-tips h3 {
-            font-family: 'Playfair Display', serif;
-            color: var(--primary-dark);
-            margin-bottom: 30px; font-size: 1.8rem;
-            text-align: center; font-weight: 700;
-        }
+        .section-title .tag { display: inline-block; background: linear-gradient(135deg, var(--secondary) 0%, #FDE8F0 100%); color: var(--primary); padding: 8px 24px; border-radius: 50px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
+        .section-title h2 { font-family: 'Playfair Display', serif; font-size: 2.8rem; color: var(--dark); margin-bottom: 10px; font-weight: 700; }
+        .care-tips { background: linear-gradient(135deg, #FFF9FB 0%, var(--secondary) 100%); border-radius: 24px; padding: 45px 40px; margin-bottom: 50px; border: 1px solid rgba(196,88,122,0.1); box-shadow: 0 20px 60px rgba(196,88,122,0.08); position: relative; overflow: hidden; }
+        .care-tips::before { content: ''; position: absolute; top: 0; left: 0; width: 5px; height: 100%; background: linear-gradient(180deg, var(--primary), var(--gold)); }
+        .care-tips h3 { font-family: 'Playfair Display', serif; color: var(--primary-dark); margin-bottom: 30px; font-size: 1.8rem; text-align: center; font-weight: 700; }
         .care-tips ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .care-tips li {
-            display: flex; align-items: flex-start; gap: 15px;
-            color: var(--dark); font-size: 0.95rem; line-height: 1.6;
-            padding: 15px; background: rgba(255,255,255,0.7);
-            border-radius: 12px; transition: all 0.3s;
-        }
+        .care-tips li { display: flex; align-items: flex-start; gap: 15px; color: var(--dark); font-size: 0.95rem; line-height: 1.6; padding: 15px; background: rgba(255,255,255,0.7); border-radius: 12px; transition: all 0.3s; }
         .care-tips li:hover { transform: translateX(5px); background: rgba(255,255,255,0.95); }
         .care-tips li i { color: var(--primary); margin-top: 3px; flex-shrink: 0; font-size: 1.2rem; }
-
-        .cta-agendar {
-            text-align: center; padding: 50px 20px;
-            background: linear-gradient(135deg, var(--secondary) 0%, #FDE8F0 100%);
-            border-radius: 24px;
-        }
+        .cta-agendar { text-align: center; padding: 50px 20px; background: linear-gradient(135deg, var(--secondary) 0%, #FDE8F0 100%); border-radius: 24px; }
         .cta-agendar p { font-size: 1.2rem; color: var(--dark); margin-bottom: 30px; font-weight: 500; }
-
-        .btn-ver-servicos {
-            display: inline-flex; align-items: center; gap: 12px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white; padding: 18px 45px; border-radius: 50px;
-            font-weight: 600; font-size: 1.05rem;
-            transition: all 0.4s; box-shadow: 0 8px 25px rgba(196,88,122,0.3);
-            border: none; cursor: pointer;
-        }
+        .btn-ver-servicos { display: inline-flex; align-items: center; gap: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 18px 45px; border-radius: 50px; font-weight: 600; font-size: 1.05rem; transition: all 0.4s; box-shadow: 0 8px 25px rgba(196,88,122,0.3); border: none; cursor: pointer; }
         .btn-ver-servicos:hover { transform: translateY(-3px) scale(1.02); }
 
         /* GALERIA */
         .gallery-section { padding: 100px 20px; background: linear-gradient(135deg, #FFF5F8 0%, #F8E8EE 50%, #FDE8F0 100%); }
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; max-width: 1000px; margin: 0 auto; }
-        .gallery-item {
-            position: relative; border-radius: 20px; overflow: hidden;
-            aspect-ratio: 1; background: var(--secondary);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: all 0.4s; cursor: pointer;
-        }
+        .gallery-item { position: relative; border-radius: 20px; overflow: hidden; aspect-ratio: 1; background: var(--secondary); box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: all 0.4s; cursor: pointer; }
         .gallery-item:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 20px 50px rgba(196,88,122,0.2); }
         .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s; }
         .gallery-item:hover img { transform: scale(1.1); }
-
         .instagram-link { text-align: center; margin-top: 50px; }
-        .instagram-link a {
-            color: var(--primary); text-decoration: none;
-            font-weight: 600; font-size: 1.1rem;
-            display: inline-flex; align-items: center; gap: 10px;
-            padding: 12px 30px; border: 2px solid var(--primary);
-            border-radius: 50px; transition: all 0.3s;
-        }
+        .instagram-link a { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 1.1rem; display: inline-flex; align-items: center; gap: 10px; padding: 12px 30px; border: 2px solid var(--primary); border-radius: 50px; transition: all 0.3s; }
         .instagram-link a:hover { background: var(--primary); color: white; transform: translateY(-2px); }
 
         /* MODAL */
-        .services-modal {
-            display: none; position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(8px);
-            z-index: 3000; justify-content: center;
-            align-items: center; padding: 20px; overflow-y: auto;
-        }
+        .services-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); z-index: 3000; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
         .services-modal.active { display: flex; }
-        .modal-content {
-            background: white; border-radius: 28px;
-            max-width: 700px; width: 100%; max-height: 90vh;
-            overflow-y: auto; position: relative;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
-            animation: slideUp 0.5s;
-        }
+        .modal-content { background: white; border-radius: 28px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 30px 80px rgba(0,0,0,0.4); animation: slideUp 0.5s; }
         @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white; padding: 40px 30px; text-align: center;
-            position: sticky; top: 0; z-index: 10;
-            border-radius: 28px 28px 0 0;
-        }
+        .modal-header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 40px 30px; text-align: center; position: sticky; top: 0; z-index: 10; border-radius: 28px 28px 0 0; }
         .modal-header h2 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 8px; }
-        .modal-close-btn {
-            position: absolute; top: 20px; right: 20px;
-            background: rgba(255,255,255,0.2); border: none;
-            width: 40px; height: 40px; border-radius: 50%;
-            color: white; font-size: 1.2rem; cursor: pointer;
-        }
+        .modal-close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; width: 40px; height: 40px; border-radius: 50%; color: white; font-size: 1.2rem; cursor: pointer; }
         .modal-close-btn:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
         .modal-body { padding: 0; }
-        .modal-service-item {
-            display: flex; align-items: flex-start;
-            padding: 22px 30px; border-bottom: 1px solid var(--light-gray);
-        }
+        .modal-service-item { display: flex; align-items: flex-start; padding: 22px 30px; border-bottom: 1px solid var(--light-gray); }
         .modal-service-item:last-child { border-bottom: none; }
         .modal-service-content { flex: 1; padding-right: 15px; }
         .modal-service-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
@@ -465,125 +90,50 @@ function carregarConteudoSite(conteudo) {
         .modal-service-duration { color: var(--gray); font-size: 0.9rem; }
         .modal-service-radio input[type="radio"] { width: 24px; height: 24px; accent-color: var(--primary); cursor: pointer; }
         .modal-footer { padding: 25px 30px 35px; background: var(--secondary); text-align: center; border-radius: 0 0 28px 28px; }
-        .btn-agendar {
-            display: inline-flex; align-items: center; gap: 12px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white; padding: 16px 40px; border-radius: 50px;
-            font-weight: 600; font-size: 1.05rem;
-            border: none; cursor: pointer;
-        }
+        .btn-agendar { display: inline-flex; align-items: center; gap: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 16px 40px; border-radius: 50px; font-weight: 600; font-size: 1.05rem; border: none; cursor: pointer; }
         .btn-agendar:hover { transform: translateY(-2px); }
 
         /* FOOTER */
         .footer { background: linear-gradient(135deg, var(--dark) 0%, #1a1a1a 100%); color: white; padding: 50px 20px 30px; text-align: center; }
         .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 15px; color: var(--primary-light); }
         .footer-social { display: flex; justify-content: center; gap: 20px; margin: 20px 0; }
-        .footer-social a {
-            width: 45px; height: 45px; border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            display: flex; align-items: center; justify-content: center;
-            color: white; text-decoration: none; transition: all 0.3s;
-        }
+        .footer-social a { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: all 0.3s; }
         .footer-social a:hover { background: var(--primary); transform: translateY(-3px); }
         .footer-copy { font-size: 0.85rem; opacity: 0.6; margin-top: 20px; }
 
-        /* ADMIN */
-        .admin-link {
-            position: fixed; bottom: 20px; right: 20px;
-            color: var(--gray); text-decoration: none;
-            font-size: 0.75rem; opacity: 0.4;
-            z-index: 100; transition: opacity 0.3s;
-        }
+        /* ADMIN UI */
+        .admin-link { position: fixed; bottom: 20px; right: 20px; color: var(--gray); text-decoration: none; font-size: 0.75rem; opacity: 0.4; z-index: 100; transition: opacity 0.3s; }
         .admin-link:hover { opacity: 1; }
-
-        .login-overlay {
-            display: none; position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
-            z-index: 4000; justify-content: center;
-            align-items: center; padding: 20px;
-        }
+        .login-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 4000; justify-content: center; align-items: center; padding: 20px; }
         .login-overlay.active { display: flex; }
-        .login-box {
-            background: white; padding: 40px;
-            border-radius: 24px; text-align: center;
-            max-width: 400px; width: 100%;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-        }
+        .login-box { background: white; padding: 40px; border-radius: 24px; text-align: center; max-width: 400px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
         .login-box img { max-width: 120px; margin-bottom: 20px; }
         .login-box h2 { font-family: 'Playfair Display', serif; margin-bottom: 10px; }
         .login-box p { color: var(--gray); font-size: 0.9rem; margin-bottom: 25px; }
-        .login-input {
-            width: 100%; padding: 14px;
-            border: 2px solid #e5e7eb; border-radius: 10px;
-            font-size: 1rem; margin-bottom: 15px;
-            font-family: 'Poppins', sans-serif;
-        }
+        .login-input { width: 100%; padding: 14px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1rem; margin-bottom: 15px; font-family: 'Poppins', sans-serif; }
         .login-input:focus { outline: none; border-color: var(--primary); }
-        .btn-login {
-            width: 100%; padding: 14px;
-            background: var(--primary); color: white;
-            border: none; border-radius: 10px;
-            font-weight: 600; cursor: pointer; margin-bottom: 15px;
-        }
+        .btn-login { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; margin-bottom: 15px; }
         .btn-cancel { background: none; border: none; color: var(--gray); cursor: pointer; }
         .error-msg { color: #ef4444; font-size: 0.85rem; margin-bottom: 10px; display: none; }
 
-        /* DASHBOARD ADMIN COM ABAS */
-        .admin-overlay {
-            display: none; position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #f3f4f6; z-index: 4000;
-            overflow-y: auto; padding: 20px;
-        }
+        .admin-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f3f4f6; z-index: 4000; overflow-y: auto; padding: 20px; }
         .admin-overlay.active { display: block; }
         .admin-container { max-width: 1000px; margin: 0 auto; }
-        .admin-header {
-            background: white; padding: 20px 30px;
-            border-radius: 15px; margin-bottom: 20px;
-            display: flex; justify-content: space-between;
-            align-items: center; flex-wrap: wrap; gap: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
+        .admin-header { background: white; padding: 20px 30px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .admin-header h2 { font-family: 'Playfair Display', serif; color: var(--primary); }
-        .admin-tabs {
-            display: flex; gap: 8px; margin-bottom: 20px;
-            flex-wrap: wrap; background: white;
-            padding: 10px; border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .admin-tab {
-            padding: 10px 18px; border: none;
-            background: transparent; color: var(--gray);
-            border-radius: 8px; cursor: pointer;
-            font-weight: 500; font-size: 0.9rem;
-            transition: all 0.3s; font-family: 'Poppins', sans-serif;
-        }
+        .admin-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .admin-tab { padding: 10px 18px; border: none; background: transparent; color: var(--gray); border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: all 0.3s; font-family: 'Poppins', sans-serif; }
         .admin-tab:hover { background: var(--secondary); color: var(--primary); }
         .admin-tab.active { background: var(--primary); color: white; }
-        .admin-card {
-            background: white; padding: 30px;
-            border-radius: 15px; margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            display: none;
-        }
+        .admin-card { background: white; padding: 30px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: none; }
         .admin-card.active { display: block; }
         .admin-card h3 { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--dark); }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--dark); margin-bottom: 6px; }
-        .form-group input, .form-group textarea {
-            width: 100%; padding: 12px;
-            border: 1px solid #e5e7eb; border-radius: 8px;
-            font-family: 'Poppins', sans-serif; font-size: 0.95rem;
-        }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 0.95rem; }
         .form-group textarea { resize: vertical; min-height: 80px; }
         .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
-        .btn-save, .btn-add {
-            background: var(--primary); color: white;
-            border: none; padding: 12px 25px;
-            border-radius: 8px; cursor: pointer;
-            font-weight: 600; font-family: 'Poppins', sans-serif;
-        }
+        .btn-save, .btn-add { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: 'Poppins', sans-serif; }
         .btn-save:hover, .btn-add:hover { background: var(--primary-dark); }
         .btn-sm { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
         .btn-edit { background: var(--gold); color: white; }
@@ -591,32 +141,23 @@ function carregarConteudoSite(conteudo) {
         .btn-back { background: var(--primary); color: white; }
         .btn-logout { background: #6B7280; color: white; }
         .admin-list { display: grid; gap: 12px; }
-        .admin-item {
-            background: #f9fafb; padding: 15px;
-            border-radius: 10px; display: flex;
-            justify-content: space-between; align-items: center;
-            flex-wrap: wrap; gap: 10px;
-        }
+        .admin-item { background: #f9fafb; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .admin-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
         .tip-item { background: #f9fafb; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }
         .tip-item input { flex: 1; }
         .dica-list { max-height: 400px; overflow-y: auto; }
 
+        /* File Input Styling */
+        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
+        .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        .file-input-button { display: block; width: 100%; padding: 12px; background: var(--light); border: 2px dashed var(--primary); border-radius: 8px; text-align: center; color: var(--primary); font-weight: 500; transition: all 0.3s; }
+        .file-input-wrapper:hover .file-input-button { background: var(--secondary); }
+
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2rem; }
-            .section-title h2 { font-size: 2rem; }
-            .hero-logo { max-width: 280px; }
-            .care-tips ul { grid-template-columns: 1fr; }
-            .care-tips { padding: 30px 20px; }
-            .admin-tabs { overflow-x: auto; flex-wrap: nowrap; }
-            .admin-tab { white-space: nowrap; }
+            .hero h1 { font-size: 2rem; } .section-title h2 { font-size: 2rem; } .hero-logo { max-width: 280px; }
+            .care-tips ul { grid-template-columns: 1fr; } .care-tips { padding: 30px 20px; }
+            .admin-tabs { overflow-x: auto; flex-wrap: nowrap; } .admin-tab { white-space: nowrap; }
         }
-
-.file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
-.file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
-.file-input-button { display: block; width: 100%; padding: 12px; background: var(--light); border: 2px dashed var(--primary); border-radius: 8px; text-align: center; color: var(--primary); font-weight: 500; transition: all 0.3s; }
-.file-input-wrapper:hover .file-input-button { background: var(--secondary); }
-
     </style>
 </head>
 <body>
@@ -626,9 +167,7 @@ function carregarConteudoSite(conteudo) {
         <img src="https://i.postimg.cc/jSX4xCBY/logo-emily-rossato-sem-fundo-removebg-preview.png" alt="Emilly Rossato" class="hero-logo">
         <h1 id="hero-titulo">Unhas Perfeitas, Confiança Inabalável</h1>
         <p id="hero-subtitulo">Especialista em Alongamento em Molde F1 e Fibra de Vidro com acabamento impecável</p>
-        <button onclick="openModal()" class="btn-primary">
-            <i class="fas fa-calendar-alt"></i> <span id="hero-botao">Agende seu horário</span>
-        </button>
+        <button onclick="openModal()" class="btn-primary"><i class="fas fa-calendar-alt"></i> <span id="hero-botao">Agende seu horário</span></button>
         <div class="scroll-indicator"><i class="fas fa-chevron-down"></i></div>
     </section>
 
@@ -646,35 +185,26 @@ function carregarConteudoSite(conteudo) {
             </div>
             <div class="cta-agendar fade-in">
                 <p id="cta-texto">✨ Quer conhecer todos os serviços e valores disponíveis? ✨</p>
-                <button onclick="openModal()" class="btn-ver-servicos">
-                    <i class="fas fa-list"></i> <span id="cta-botao">Ver Lista de Serviços</span>
-                </button>
+                <button onclick="openModal()" class="btn-ver-servicos"><i class="fas fa-list"></i> <span id="cta-botao">Ver Lista de Serviços</span></button>
             </div>
         </div>
     </section>
 
-    <!-- GALERIA -->
-  <!-- ABA GALERIA -->
-<div id="aba-galeria" class="admin-card">
-    <h3><i class="fas fa-images" style="color: var(--primary);"></i> Gerenciar Galeria</h3>
-    <p style="color: var(--gray); font-size: 0.9rem; margin-bottom: 15px;">
-        Selecione uma foto do seu computador ou celular para enviar diretamente para o site.
-    </p>
-    <div class="form-group">
-        <label>Escolher Imagem</label>
-        <div class="file-input-wrapper">
-            <input type="file" id="fotoFile" accept="image/*" onchange="atualizarNomeArquivo(this)">
-            <div class="file-input-button" id="fileButtonLabel">
-                <i class="fas fa-cloud-upload-alt"></i> Clique para selecionar uma foto
+    <!-- GALERIA PÚBLICA -->
+    <section class="gallery-section">
+        <div class="container">
+            <div class="section-title fade-in">
+                <span class="tag">Portfólio</span>
+                <h2 id="galeria-titulo">Meus Trabalhos</h2>
+                <div class="divider"></div>
+            </div>
+            <div class="gallery-grid" id="galeriaGrid"></div>
+            <div class="instagram-link fade-in">
+                <a href="https://www.instagram.com/nails.emillyr/" target="_blank"><i class="fab fa-instagram"></i> Veja mais no Instagram</a>
             </div>
         </div>
-    </div>
-    <button onclick="adicionarFoto()" class="btn-add" id="btnAddFoto">
-        <i class="fas fa-plus"></i> Enviar Foto
-    </button>
-    <h4 style="margin: 25px 0 15px;">Fotos Cadastradas</h4>
-    <div id="adminGaleriaList" class="admin-list"></div>
-</div>
+    </section>
+
     <!-- FOOTER -->
     <footer class="footer">
         <div class="footer-logo" id="footer-logo">Emilly Rossato</div>
@@ -694,13 +224,9 @@ function carregarConteudoSite(conteudo) {
                 <h2><i class="fas fa-spa"></i> Meus Serviços</h2>
                 <p>Escolha o serviço desejado</p>
             </div>
-            <div class="modal-body">
-                <div id="modalServices"></div>
-            </div>
+            <div class="modal-body"><div id="modalServices"></div></div>
             <div class="modal-footer">
-                <button onclick="confirmarAgendamento()" class="btn-agendar">
-                    <i class="fas fa-calendar-check"></i> Confirmar Agendamento
-                </button>
+                <button onclick="confirmarAgendamento()" class="btn-agendar"><i class="fas fa-calendar-check"></i> Confirmar Agendamento</button>
             </div>
         </div>
     </div>
@@ -721,7 +247,7 @@ function carregarConteudoSite(conteudo) {
         </div>
     </div>
 
-    <!-- DASHBOARD ADMIN COM ABAS -->
+    <!-- DASHBOARD ADMIN -->
     <div id="adminOverlay" class="admin-overlay">
         <div class="admin-container">
             <div class="admin-header">
@@ -732,7 +258,6 @@ function carregarConteudoSite(conteudo) {
                 </div>
             </div>
 
-            <!-- ABAS -->
             <div class="admin-tabs">
                 <button class="admin-tab active" onclick="mudarAba('aba-hero', this)"><i class="fas fa-home"></i> Hero</button>
                 <button class="admin-tab" onclick="mudarAba('aba-cuidados', this)"><i class="fas fa-heart"></i> Cuidados</button>
@@ -743,58 +268,40 @@ function carregarConteudoSite(conteudo) {
 
             <!-- ABA HERO -->
             <div id="aba-hero" class="admin-card active">
-                <h3><i class="fas fa-home" style="color: var(--primary);"></i> Editar Seção Principal (Hero)</h3>
-                <div class="form-group">
-                    <label>Título Principal</label>
-                    <input type="text" id="edit-hero-titulo">
-                </div>
-                <div class="form-group">
-                    <label>Subtítulo</label>
-                    <textarea id="edit-hero-subtitulo"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Texto do Botão</label>
-                    <input type="text" id="edit-hero-botao">
-                </div>
+                <h3><i class="fas fa-home" style="color: var(--primary);"></i> Editar Seção Principal</h3>
+                <div class="form-group"><label>Título Principal</label><input type="text" id="edit-hero-titulo"></div>
+                <div class="form-group"><label>Subtítulo</label><textarea id="edit-hero-subtitulo"></textarea></div>
+                <div class="form-group"><label>Texto do Botão</label><input type="text" id="edit-hero-botao"></div>
                 <button onclick="salvarHero()" class="btn-save"><i class="fas fa-save"></i> Salvar Alterações</button>
             </div>
 
             <!-- ABA CUIDADOS -->
             <div id="aba-cuidados" class="admin-card">
                 <h3><i class="fas fa-heart" style="color: var(--primary);"></i> Editar Seção de Cuidados</h3>
-                <div class="form-group">
-                    <label>Título da Seção</label>
-                    <input type="text" id="edit-cuidados-titulo">
-                </div>
-                <div class="form-group">
-                    <label>Subtítulo (com emoji)</label>
-                    <input type="text" id="edit-cuidados-subtitulo">
-                </div>
-                <div class="form-group">
-                    <label>Texto do CTA (acima do botão)</label>
-                    <textarea id="edit-cta-texto"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Texto do Botão CTA</label>
-                    <input type="text" id="edit-cta-botao">
-                </div>
+                <div class="form-group"><label>Título da Seção</label><input type="text" id="edit-cuidados-titulo"></div>
+                <div class="form-group"><label>Subtítulo (com emoji)</label><input type="text" id="edit-cuidados-subtitulo"></div>
+                <div class="form-group"><label>Texto do CTA</label><textarea id="edit-cta-texto"></textarea></div>
+                <div class="form-group"><label>Texto do Botão CTA</label><input type="text" id="edit-cta-botao"></div>
                 <h4 style="margin: 20px 0 10px; color: var(--dark);">Lista de Dicas</h4>
                 <div id="dicas-container" class="dica-list"></div>
                 <button onclick="adicionarDica()" class="btn-add" style="margin-top: 10px;"><i class="fas fa-plus"></i> Adicionar Dica</button>
                 <button onclick="salvarCuidados()" class="btn-save" style="margin-top: 10px; margin-left: 10px;"><i class="fas fa-save"></i> Salvar Cuidados</button>
             </div>
 
-            <!-- ABA GALERIA -->
+            <!-- ABA GALERIA (CORRIGIDA PARA UPLOAD) -->
             <div id="aba-galeria" class="admin-card">
                 <h3><i class="fas fa-images" style="color: var(--primary);"></i> Gerenciar Galeria</h3>
-                <p style="color: var(--gray); font-size: 0.9rem; margin-bottom: 15px;">
-                    Suba a foto em <a href="https://postimg.cc/" target="_blank" style="color: var(--primary);">Postimg.cc</a> e cole o "Direct link" abaixo.
-                </p>
+                <p style="color: var(--gray); font-size: 0.9rem; margin-bottom: 15px;">Selecione uma foto do seu computador ou celular para enviar diretamente para o site.</p>
                 <div class="form-group">
-                    <label>URL da Imagem</label>
-                    <input type="url" id="fotoUrl" placeholder="https://i.postimg.cc/...">
+                    <label>Escolher Imagem</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fotoFile" accept="image/*" onchange="atualizarNomeArquivo(this)">
+                        <div class="file-input-button" id="fileButtonLabel">
+                            <i class="fas fa-cloud-upload-alt"></i> Clique para selecionar uma foto
+                        </div>
+                    </div>
                 </div>
-                <button onclick="adicionarFoto()" class="btn-add"><i class="fas fa-plus"></i> Adicionar Foto</button>
+                <button onclick="adicionarFoto()" class="btn-add" id="btnAddFoto"><i class="fas fa-plus"></i> Enviar Foto</button>
                 <h4 style="margin: 25px 0 15px;">Fotos Cadastradas</h4>
                 <div id="adminGaleriaList" class="admin-list"></div>
             </div>
@@ -802,22 +309,10 @@ function carregarConteudoSite(conteudo) {
             <!-- ABA SERVIÇOS -->
             <div id="aba-servicos" class="admin-card">
                 <h3><i class="fas fa-spa" style="color: var(--primary);"></i> Gerenciar Serviços</h3>
-                <div class="form-group">
-                    <label>Nome do Serviço</label>
-                    <input type="text" id="servNome" placeholder="Ex: Alongamento F1">
-                </div>
-                <div class="form-group">
-                    <label>Preço (R$)</label>
-                    <input type="text" id="servPreco" placeholder="Ex: 170,00">
-                </div>
-                <div class="form-group">
-                    <label>Duração</label>
-                    <input type="text" id="servDuracao" placeholder="Ex: 1 h 40 min">
-                </div>
-                <div class="form-group">
-                    <label>Descrição (opcional)</label>
-                    <input type="text" id="servDescricao" placeholder="Opcional">
-                </div>
+                <div class="form-group"><label>Nome do Serviço</label><input type="text" id="servNome" placeholder="Ex: Alongamento F1"></div>
+                <div class="form-group"><label>Preço (R$)</label><input type="text" id="servPreco" placeholder="Ex: 170,00"></div>
+                <div class="form-group"><label>Duração</label><input type="text" id="servDuracao" placeholder="Ex: 1 h 40 min"></div>
+                <div class="form-group"><label>Descrição (opcional)</label><input type="text" id="servDescricao" placeholder="Opcional"></div>
                 <button onclick="adicionarServico()" class="btn-add"><i class="fas fa-plus"></i> Adicionar Serviço</button>
                 <h4 style="margin: 25px 0 15px;">Serviços Cadastrados</h4>
                 <div id="adminServicosList" class="admin-list"></div>
@@ -826,62 +321,29 @@ function carregarConteudoSite(conteudo) {
             <!-- ABA CONFIGURAÇÕES -->
             <div id="aba-config" class="admin-card">
                 <h3><i class="fas fa-cog" style="color: var(--primary);"></i> Configurações Gerais</h3>
-                <div class="form-group">
-                    <label>Link do Google Agenda</label>
-                    <input type="text" id="agendaLinkInput" placeholder="https://calendar.google.com/...">
-                </div>
+                <div class="form-group"><label>Link do Google Agenda</label><input type="text" id="agendaLinkInput" placeholder="https://calendar.google.com/..."></div>
                 <button onclick="salvarAgenda()" class="btn-save"><i class="fas fa-save"></i> Salvar Link da Agenda</button>
             </div>
         </div>
     </div>
 
-    <!-- FIREBASE -->
+    <!-- LÓGICA JAVASCRIPT (MÓDULO) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // 1. Inicialização do Supabase
+        const SUPABASE_URL = "https://axviasxqylwbutrbggun.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_oINRe3-E6BDYdpNftspxlA_OGYVSi6u"; // Substitua pela sua chave real se diferente
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBncBZXFWR3zHepJ6qmYyDs5EHkvsChmQ",
-            authDomain: "eminails-58f2a.firebaseapp.com",
-            projectId: "eminails-58f2a",
-            storageBucket: "eminails-58f2a.firebasestorage.app",
-            messagingSenderId: "901930625914",
-            appId: "1:901930625914:web:b85633a9007eaae0b784c3"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const CHAVE_SECRETA = "EmillyNails2025!";
-
+        // 2. Estado Global
         let linkAgendaGlobal = "";
         let dicasAtuais = [];
 
-        // Conteúdo padrão (primeira vez)
         const conteudoPadrao = {
-            hero: {
-                titulo: "Unhas Perfeitas, Confiança Inabalável",
-                subtitulo: "Especialista em Alongamento em Molde F1 e Fibra de Vidro com acabamento impecável",
-                botao: "Agende seu horário"
-            },
-            cuidados: {
-                titulo: "Dicas Essenciais",
-                subtitulo: "💅 Cuidados com suas Unhas",
-                dicas: [
-                    "Não bater, roer ou forçar as unhas.",
-                    "Evite usar as unhas como ferramentas.",
-                    "Faça manutenção a cada 2 ou 4 semanas para prevenir fungos e bactérias.",
-                    "Mantenha as unhas limpas e secas.",
-                    "Não puxar nem tentar remover o alongamento em casa."
-                ],
-                ctaTexto: "✨ Quer conhecer todos os serviços e valores disponíveis? ✨",
-                ctaBotao: "Ver Lista de Serviços"
-            },
-            galeria: {
-                titulo: "Meus Trabalhos"
-            }
+            hero: { titulo: "Unhas Perfeitas, Confiança Inabalável", subtitulo: "Especialista em Alongamento em Molde F1 e Fibra de Vidro com acabamento impecável", botao: "Agende seu horário" },
+            cuidados: { titulo: "Dicas Essenciais", subtitulo: "💅 Cuidados com suas Unhas", dicas: ["Não bater, roer ou forçar as unhas.", "Evite usar as unhas como ferramentas.", "Faça manutenção a cada 2 ou 4 semanas.", "Mantenha as unhas limpas e secas.", "Não puxar nem tentar remover o alongamento em casa."], ctaTexto: "✨ Quer conhecer todos os serviços e valores disponíveis? ✨", ctaBotao: "Ver Lista de Serviços" }
         };
 
-        // ===== NAVEGAÇÃO =====
+        // 3. Funções de Navegação UI
         window.openModal = () => { document.getElementById('servicesModal').classList.add('active'); document.body.style.overflow = 'hidden'; carregarDados(); };
         window.closeModal = () => { document.getElementById('servicesModal').classList.remove('active'); document.body.style.overflow = 'auto'; };
         window.openLogin = () => { document.getElementById('loginOverlay').classList.add('active'); document.getElementById('senhaInput').value = ''; document.getElementById('errorMsg').style.display = 'none'; };
@@ -896,20 +358,14 @@ function carregarConteudoSite(conteudo) {
             btn.classList.add('active');
         };
 
-        // ===== LOGIN VIA API VERCEL =====
+        // 4. Login via Vercel API
         window.verificarSenha = async () => {
             const senha = document.getElementById('senhaInput').value;
             const btn = document.querySelector('.btn-login');
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
-            
             try {
-                const res = await fetch('/api/verificar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ senha })
-                });
+                const res = await fetch('/api/verificar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ senha }) });
                 const data = await res.json();
-                
                 if (data.valido) {
                     closeLogin();
                     document.getElementById('adminOverlay').classList.add('active');
@@ -918,247 +374,214 @@ function carregarConteudoSite(conteudo) {
                     document.getElementById('errorMsg').style.display = 'block';
                 }
             } catch (e) {
-                alert("Erro de conexão. Verifique se o arquivo api/verificar.js existe na pasta api/");
+                alert("Erro de conexão com a API de verificação.");
             } finally {
                 btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
             }
         };
 
-        // ===== CARREGAR DADOS =====
-        async function carregarDados() {
-            try {
-                // 1. Link da Agenda
-                const configDoc = await getDoc(doc(db, "configuracoes", "site_settings"));
-                if (configDoc.exists()) {
-                    linkAgendaGlobal = configDoc.data().linkAgenda || "";
-                    document.getElementById('agendaLinkInput').value = linkAgendaGlobal;
-                }
-
-                // 2. Conteúdo Editável
-                const conteudoDoc = await getDoc(doc(db, "conteudo", "principal"));
-                let conteudo = conteudoPadrao;
-                if (conteudoDoc.exists()) {
-                    conteudo = conteudoDoc.data();
-                } else {
-                    // Salva o padrão na primeira vez
-                    await setDoc(doc(db, "conteudo", "principal"), { ...conteudoPadrao, chaveSecreta: CHAVE_SECRETA });
-                }
-
-                // Preenche os campos do admin
-                document.getElementById('edit-hero-titulo').value = conteudo.hero.titulo;
-                document.getElementById('edit-hero-subtitulo').value = conteudo.hero.subtitulo;
-                document.getElementById('edit-hero-botao').value = conteudo.hero.botao;
-                document.getElementById('edit-cuidados-titulo').value = conteudo.cuidados.titulo;
-                document.getElementById('edit-cuidados-subtitulo').value = conteudo.cuidados.subtitulo;
-                document.getElementById('edit-cta-texto').value = conteudo.cuidados.ctaTexto;
-                document.getElementById('edit-cta-botao').value = conteudo.cuidados.ctaBotao;
-                
-                dicasAtuais = [...(conteudo.cuidados.dicas || [])];
-                renderizarDicasAdmin();
-
-                // Atualiza o site
-                carregarConteudoSite();
-
-                // 3. Galeria
-                const galeriaSnap = await getDocs(collection(db, "galeria"));
-                const galeriaGrid = document.getElementById('galeriaGrid');
-                const adminGaleria = document.getElementById('adminGaleriaList');
-                galeriaGrid.innerHTML = '';
-                adminGaleria.innerHTML = '';
-
-                if (galeriaSnap.empty) {
-                    galeriaGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--gray);">Nenhuma foto ainda. Adicione pelo Admin!</p>';
-                    adminGaleria.innerHTML = '<p style="text-align: center; color: var(--gray);">Nenhuma foto cadastrada.</p>';
-                } else {
-                    galeriaSnap.forEach(docSnap => {
-                        const foto = docSnap.data();
-                        const id = docSnap.id;
-                        galeriaGrid.innerHTML += `<div class="gallery-item fade-in visible"><img src="${foto.url}" alt="Trabalho"></div>`;
-                        adminGaleria.innerHTML += `
-                            <div class="admin-item">
-                                <img src="${foto.url}">
-                                <small style="color: var(--gray); word-break: break-all; flex: 1;">${foto.url}</small>
-                                <button onclick="excluirFoto('${id}')" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button>
-                            </div>`;
-                    });
-                }
-
-                // 4. Serviços
-                const servicosSnap = await getDocs(collection(db, "servicos"));
-                const modalServ = document.getElementById('modalServices');
-                const adminServ = document.getElementById('adminServicosList');
-                modalServ.innerHTML = '';
-                adminServ.innerHTML = '';
-
-                let servicos = [];
-                if (servicosSnap.empty) {
-                    // Serviços iniciais
-                    const iniciais = [
-                        { nome: "APLICAÇÃO ALONGAMENTO DE GEL ENCAPSULADO 🦋", preco: "170,00", duracao: "1 h 40 min", descricao: "" },
-                        { nome: "APLICAÇÃO ALONGAMENTO DE GEL TRADICIONAL 🦋", preco: "165,00", duracao: "1 h 30 min", descricao: "" },
-                        { nome: "APLICAÇÃO DE FIBRA DE VIDRO ENCAPSULADO ", preco: "180,00", duracao: "1 h 55 min", descricao: "" },
-                        { nome: "APLICAÇÃO DE FIBRA DE VIDRO TRADICIONAL ", preco: "175,00", duracao: "1 h 40 min", descricao: "" },
-                        { nome: "BANHO DE GEL ENCAPSULADO", preco: "120,00", duracao: "1 h 30 min", descricao: "" },
-                        { nome: "BANHO DE GEL NOS PÉS 🦋", preco: "90,00", duracao: "1 h", descricao: "" },
-                        { nome: "BANHO DE GEL TRADICIONAL", preco: "115,00", duracao: "1 h 30 min", descricao: "" },
-                        { nome: "Concerto 🦋", preco: "10,00", duracao: "10 min", descricao: "" }
-                    ];
-                    for (const s of iniciais) {
-                        await addDoc(collection(db, "servicos"), { ...s, chaveSecreta: CHAVE_SECRETA });
-                    }
-                    servicos = iniciais;
-                } else {
-                    servicosSnap.forEach(d => servicos.push({ id: d.id, ...d.data() }));
-                }
-
-                modalServ.innerHTML = servicos.map((s, i) => `
-                    <div class="modal-service-item">
-                        <div class="modal-service-content">
-                            <div class="modal-service-title">${s.nome}</div>
-                            <div class="modal-service-info">
-                                <span class="modal-service-price">R$ ${s.preco}</span>
-                                <span class="modal-service-duration">🕐 ${s.duracao}</span>
-                            </div>
-                        </div>
-                        <div><input type="radio" name="servico" value="${s.nome}"></div>
-                    </div>
-                `).join('');
-
-                adminServ.innerHTML = servicos.map(s => `
-                    <div class="admin-item">
-                        <div style="flex: 1;">
-                            <strong>${s.nome}</strong><br>
-                            <small style="color: var(--gray);">R$ ${s.preco} • ${s.duracao}</small>
-                        </div>
-                        <div>
-                            <button onclick="editarServico('${s.id}','${s.nome}','${s.preco}','${s.duracao}')" class="btn-sm btn-edit"><i class="fas fa-edit"></i></button>
-                            <button onclick="excluirServico('${s.id}')" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                `).join('');
-
-            } catch (e) {
-                console.error("Erro:", e);
+        // 5. Carregar Dados do Supabase
+        window.carregarDados = async () => {
+            // 5.1 Agenda
+            const { data: configAgenda } = await supabase.from('configuracoes').select('valor').eq('chave', 'agenda_link').maybeSingle();
+            if (configAgenda) {
+                linkAgendaGlobal = configAgenda.valor;
+                document.getElementById('agendaLinkInput').value = linkAgendaGlobal;
             }
+
+            // 5.2 Conteúdo Editável
+            const { data: configConteudo } = await supabase.from('configuracoes').select('valor').eq('chave', 'conteudo_principal').maybeSingle();
+            let conteudo = conteudoPadrao;
+            if (configConteudo) {
+                try { conteudo = JSON.parse(configConteudo.valor); } catch (e) { console.error("Erro ao parsear:", e); }
+            } else {
+                await supabase.from('configuracoes').insert({ chave: 'conteudo_principal', valor: JSON.stringify(conteudoPadrao) });
+            }
+            
+            document.getElementById('edit-hero-titulo').value = conteudo.hero?.titulo || '';
+            document.getElementById('edit-hero-subtitulo').value = conteudo.hero?.subtitulo || '';
+            document.getElementById('edit-hero-botao').value = conteudo.hero?.botao || '';
+            document.getElementById('edit-cuidados-titulo').value = conteudo.cuidados?.titulo || '';
+            document.getElementById('edit-cuidados-subtitulo').value = conteudo.cuidados?.subtitulo || '';
+            document.getElementById('edit-cta-texto').value = conteudo.cuidados?.ctaTexto || '';
+            document.getElementById('edit-cta-botao').value = conteudo.cuidados?.ctaBotao || '';
+            
+            dicasAtuais = [...(conteudo.cuidados?.dicas || [])];
+            renderizarDicasAdmin();
+            carregarConteudoSite(conteudo);
+
+            // 5.3 Galeria
+            const { data: galeriaData } = await supabase.from('galeria').select('id, url').order('created_at', { ascending: false });
+            const galeriaGrid = document.getElementById('galeriaGrid');
+            const adminGaleria = document.getElementById('adminGaleriaList');
+            galeriaGrid.innerHTML = ''; adminGaleria.innerHTML = '';
+
+            if (!galeriaData || galeriaData.length === 0) {
+                galeriaGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--gray); padding: 40px;">Nenhuma foto ainda.</p>';
+                adminGaleria.innerHTML = '<p style="text-align: center; color: var(--gray);">Nenhuma foto cadastrada.</p>';
+            } else {
+                galeriaData.forEach(foto => {
+                    galeriaGrid.innerHTML += `<div class="gallery-item fade-in visible"><img src="${foto.url}" alt="Trabalho"></div>`;
+                    adminGaleria.innerHTML += `<div class="admin-item"><img src="${foto.url}"><small style="color: var(--gray); word-break: break-all; flex: 1;">${foto.url}</small><button onclick="excluirFoto('${foto.id}')" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button></div>`;
+                });
+            }
+
+            // 5.4 Serviços
+            const { data: servicosData } = await supabase.from('servicos').select('*').order('created_at', { ascending: true });
+            const modalServ = document.getElementById('modalServices');
+            const adminServ = document.getElementById('adminServicosList');
+            modalServ.innerHTML = ''; adminServ.innerHTML = '';
+
+            let servicos = servicosData || [];
+            if (servicos.length === 0) {
+                const iniciais = [
+                    { nome: "APLICAÇÃO ALONGAMENTO DE GEL ENCAPSULADO", preco: "170,00", duracao: "1 h 40 min", descricao: "" },
+                    { nome: "APLICAÇÃO ALONGAMENTO DE GEL TRADICIONAL", preco: "165,00", duracao: "1 h 30 min", descricao: "" },
+                    { nome: "APLICAÇÃO DE FIBRA DE VIDRO ENCAPSULADO", preco: "180,00", duracao: "1 h 55 min", descricao: "" },
+                    { nome: "APLICAÇÃO DE FIBRA DE VIDRO TRADICIONAL", preco: "175,00", duracao: "1 h 40 min", descricao: "" },
+                    { nome: "BANHO DE GEL ENCAPSULADO", preco: "120,00", duracao: "1 h 30 min", descricao: "" },
+                    { nome: "BANHO DE GEL NOS PÉS", preco: "90,00", duracao: "1 h", descricao: "" },
+                    { nome: "BANHO DE GEL TRADICIONAL", preco: "115,00", duracao: "1 h 30 min", descricao: "" },
+                    { nome: "Concerto", preco: "10,00", duracao: "10 min", descricao: "" }
+                ];
+                await supabase.from('servicos').insert(iniciais);
+                servicos = iniciais;
+            }
+
+            modalServ.innerHTML = servicos.map(s => `<div class="modal-service-item"><div class="modal-service-content"><div class="modal-service-title">${s.nome}</div><div class="modal-service-info"><span class="modal-service-price">R$ ${s.preco}</span><span class="modal-service-duration">🕐 ${s.duracao}</span></div></div><div><input type="radio" name="servico" value="${s.nome}"></div></div>`).join('');
+            adminServ.innerHTML = servicos.map(s => `<div class="admin-item"><div style="flex: 1;"><strong>${s.nome}</strong><br><small style="color: var(--gray);">R$ ${s.preco} • ${s.duracao}</small></div><div><button onclick="editarServico('${s.id}','${s.nome}','${s.preco}','${s.duracao}')" class="btn-sm btn-edit"><i class="fas fa-edit"></i></button><button onclick="excluirServico('${s.id}')" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button></div></div>`).join('');
+        };
+
+        function carregarConteudoSite(conteudo) {
+            if (!conteudo) return;
+            document.getElementById('hero-titulo').textContent = conteudo.hero?.titulo || '';
+            document.getElementById('hero-subtitulo').textContent = conteudo.hero?.subtitulo || '';
+            document.getElementById('hero-botao').textContent = conteudo.hero?.botao || '';
+            document.getElementById('cuidados-titulo').textContent = conteudo.cuidados?.titulo || '';
+            document.getElementById('cuidados-subtitulo').innerHTML = conteudo.cuidados?.subtitulo || '';
+            document.getElementById('cta-texto').textContent = conteudo.cuidados?.ctaTexto || '';
+            document.getElementById('cta-botao').textContent = conteudo.cuidados?.ctaBotao || '';
+            document.getElementById('cuidados-lista').innerHTML = (conteudo.cuidados?.dicas || []).map(d => `<li><i class="fas fa-check-circle"></i> ${d}</li>`).join('');
         }
 
-        // Atualiza o site com o conteúdo do banco
-        function carregarConteudoSite() {
-            getDoc(doc(db, "conteudo", "principal")).then(docSnap => {
-                if (!docSnap.exists()) return;
-                const c = docSnap.data();
-                document.getElementById('hero-titulo').textContent = c.hero.titulo;
-                document.getElementById('hero-subtitulo').textContent = c.hero.subtitulo;
-                document.getElementById('hero-botao').textContent = c.hero.botao;
-                document.getElementById('cuidados-titulo').textContent = c.cuidados.titulo;
-                document.getElementById('cuidados-subtitulo').innerHTML = c.cuidados.subtitulo;
-                document.getElementById('cta-texto').textContent = c.cuidados.ctaTexto;
-                document.getElementById('cta-botao').textContent = c.cuidados.ctaBotao;
-
-                const lista = document.getElementById('cuidados-lista');
-                lista.innerHTML = (c.cuidados.dicas || []).map(d => `<li><i class="fas fa-check-circle"></i> ${d}</li>`).join('');
-            });
-        }
-
-        // ===== SALVAR HERO =====
+        // 6. Funções de Salvar (Admin)
         window.salvarHero = async () => {
-            const docRef = doc(db, "conteudo", "principal");
-            const atual = (await getDoc(docRef)).data() || conteudoPadrao;
-            await setDoc(docRef, {
-                ...atual,
-                hero: {
-                    titulo: document.getElementById('edit-hero-titulo').value,
-                    subtitulo: document.getElementById('edit-hero-subtitulo').value,
-                    botao: document.getElementById('edit-hero-botao').value
-                },
-                chaveSecreta: CHAVE_SECRETA
+            const docAtual = (await supabase.from('configuracoes').select('valor').eq('chave', 'conteudo_principal').maybeSingle()).data;
+            const atual = docAtual ? JSON.parse(docAtual.valor) : conteudoPadrao;
+            await supabase.from('configuracoes').upsert({ 
+                chave: 'conteudo_principal', 
+                valor: JSON.stringify({ ...atual, hero: { titulo: document.getElementById('edit-hero-titulo').value, subtitulo: document.getElementById('edit-hero-subtitulo').value, botao: document.getElementById('edit-hero-botao').value } }) 
             });
-            carregarConteudoSite();
+            carregarConteudoSite({ ...atual, hero: { titulo: document.getElementById('edit-hero-titulo').value, subtitulo: document.getElementById('edit-hero-subtitulo').value, botao: document.getElementById('edit-hero-botao').value } });
             alert("Hero atualizado!");
         };
 
-        // ===== DICAS =====
-        function renderizarDicasAdmin() {
-            const container = document.getElementById('dicas-container');
-            container.innerHTML = dicasAtuais.map((dica, i) => `
-                <div class="tip-item">
-                    <i class="fas fa-check-circle" style="color: var(--primary);"></i>
-                    <input type="text" value="${dica}" onchange="dicasAtuais[${i}] = this.value">
-                    <button onclick="removerDica(${i})" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button>
-                </div>
-            `).join('');
-        }
+        window.renderizarDicasAdmin = () => {
+            document.getElementById('dicas-container').innerHTML = dicasAtuais.map((dica, i) => `<div class="tip-item"><i class="fas fa-check-circle" style="color: var(--primary);"></i><input type="text" value="${dica}" onchange="dicasAtuais[${i}] = this.value"><button onclick="removerDica(${i})" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button></div>`).join('');
+        };
         window.adicionarDica = () => { dicasAtuais.push("Nova dica..."); renderizarDicasAdmin(); };
         window.removerDica = (i) => { dicasAtuais.splice(i, 1); renderizarDicasAdmin(); };
 
         window.salvarCuidados = async () => {
-            const docRef = doc(db, "conteudo", "principal");
-            const atual = (await getDoc(docRef)).data() || conteudoPadrao;
-            await setDoc(docRef, {
-                ...atual,
-                cuidados: {
-                    titulo: document.getElementById('edit-cuidados-titulo').value,
-                    subtitulo: document.getElementById('edit-cuidados-subtitulo').value,
-                    dicas: dicasAtuais,
-                    ctaTexto: document.getElementById('edit-cta-texto').value,
-                    ctaBotao: document.getElementById('edit-cta-botao').value
-                },
-                chaveSecreta: CHAVE_SECRETA
+            const docAtual = (await supabase.from('configuracoes').select('valor').eq('chave', 'conteudo_principal').maybeSingle()).data;
+            const atual = docAtual ? JSON.parse(docAtual.valor) : conteudoPadrao;
+            await supabase.from('configuracoes').upsert({ 
+                chave: 'conteudo_principal', 
+                valor: JSON.stringify({ ...atual, cuidados: { titulo: document.getElementById('edit-cuidados-titulo').value, subtitulo: document.getElementById('edit-cuidados-subtitulo').value, dicas: dicasAtuais, ctaTexto: document.getElementById('edit-cta-texto').value, ctaBotao: document.getElementById('edit-cta-botao').value } }) 
             });
-            carregarConteudoSite();
+            carregarConteudoSite({ ...atual, cuidados: { titulo: document.getElementById('edit-cuidados-titulo').value, subtitulo: document.getElementById('edit-cuidados-subtitulo').value, dicas: dicasAtuais, ctaTexto: document.getElementById('edit-cta-texto').value, ctaBotao: document.getElementById('edit-cta-botao').value } });
             alert("Cuidados atualizados!");
         };
 
-        // ===== GALERIA =====
-        window.adicionarFoto = async () => {
-            const url = document.getElementById('fotoUrl').value;
-            if (!url) return alert("Cole o link da imagem!");
-            await addDoc(collection(db, "galeria"), { url, chaveSecreta: CHAVE_SECRETA });
-            document.getElementById('fotoUrl').value = '';
-            carregarDados();
-            alert("Foto adicionada!");
+        window.salvarAgenda = async () => {
+            const link = document.getElementById('agendaLinkInput').value;
+            if (!link) return alert("Cole o link!");
+            await supabase.from('configuracoes').upsert({ chave: 'agenda_link', valor: link });
+            linkAgendaGlobal = link; 
+            alert("Link da agenda salvo!");
         };
+
+        // 7. Funções de Galeria (Supabase Storage)
+        window.atualizarNomeArquivo = (input) => {
+            const label = document.getElementById('fileButtonLabel');
+            if (input.files && input.files[0]) {
+                label.innerHTML = `<i class="fas fa-check-circle"></i> ${input.files[0].name}`;
+                label.style.borderColor = 'var(--primary)';
+                label.style.background = 'var(--secondary)';
+            }
+        };
+
+        window.adicionarFoto = async () => {
+            const fileInput = document.getElementById('fotoFile');
+            const file = fileInput.files[0];
+            if (!file) return alert("Selecione uma imagem primeiro!");
+
+            const btn = document.getElementById('btnAddFoto');
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            btn.disabled = true;
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}.${fileExt}`;
+                const filePath = `galeria/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage.from('imagens').upload(filePath, file);
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage.from('imagens').getPublicUrl(filePath);
+                const { error: dbError } = await supabase.from('galeria').insert({ url: publicUrl });
+                if (dbError) throw dbError;
+
+                fileInput.value = '';
+                document.getElementById('fileButtonLabel').innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Clique para selecionar uma foto';
+                document.getElementById('fileButtonLabel').style.borderColor = 'var(--primary)';
+                document.getElementById('fileButtonLabel').style.background = 'var(--light)';
+                
+                carregarDados();
+                alert("Foto enviada com sucesso!");
+            } catch (error) {
+                console.error("Erro no upload:", error);
+                alert("Erro ao enviar. Verifique se o bucket 'imagens' existe e está público no Supabase.");
+            } finally {
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+            }
+        };
+
         window.excluirFoto = async (id) => {
             if (!confirm("Excluir esta foto?")) return;
-            await deleteDoc(doc(db, "galeria", id));
+            await supabase.from('galeria').delete().eq('id', id);
             carregarDados();
         };
 
-        // ===== SERVIÇOS =====
+        // 8. Funções de Serviços
         window.adicionarServico = async () => {
             const nome = document.getElementById('servNome').value;
             const preco = document.getElementById('servPreco').value;
             const duracao = document.getElementById('servDuracao').value;
             const descricao = document.getElementById('servDescricao').value;
             if (!nome || !preco || !duracao) return alert("Preencha nome, preço e duração!");
-            await addDoc(collection(db, "servicos"), { nome, preco, duracao, descricao, chaveSecreta: CHAVE_SECRETA });
-            document.getElementById('servNome').value = '';
-            document.getElementById('servPreco').value = '';
-            document.getElementById('servDuracao').value = '';
-            document.getElementById('servDescricao').value = '';
+            
+            await supabase.from('servicos').insert({ nome, preco, duracao, descricao });
+            document.getElementById('servNome').value = ''; document.getElementById('servPreco').value = '';
+            document.getElementById('servDuracao').value = ''; document.getElementById('servDescricao').value = '';
             carregarDados();
             alert("Serviço adicionado!");
         };
+
         window.editarServico = async (id, nome, preco, duracao) => {
             const nNome = prompt("Nome:", nome); if (!nNome) return;
             const nPreco = prompt("Preço:", preco); if (!nPreco) return;
             const nDur = prompt("Duração:", duracao); if (!nDur) return;
-            await updateDoc(doc(db, "servicos", id), { nome: nNome, preco: nPreco, duracao: nDur, chaveSecreta: CHAVE_SECRETA });
-            carregarDados();
-        };
-        window.excluirServico = async (id) => {
-            if (!confirm("Excluir serviço?")) return;
-            await deleteDoc(doc(db, "servicos", id));
+            await supabase.from('servicos').update({ nome: nNome, preco: nPreco, duracao: nDur }).eq('id', id);
             carregarDados();
         };
 
-        // ===== AGENDA =====
-        window.salvarAgenda = async () => {
-            const link = document.getElementById('agendaLinkInput').value;
-            if (!link) return alert("Cole o link!");
-            await setDoc(doc(db, "configuracoes", "site_settings"), { linkAgenda: link, chaveSecreta: CHAVE_SECRETA });
-            linkAgendaGlobal = link;
-            alert("Link da agenda salvo!");
+        window.excluirServico = async (id) => {
+            if (!confirm("Excluir serviço?")) return;
+            await supabase.from('servicos').delete().eq('id', id);
+            carregarDados();
         };
 
         window.confirmarAgendamento = () => {
@@ -1169,81 +592,12 @@ function carregarConteudoSite(conteudo) {
             closeModal();
         };
 
-        // Animações
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-        }, { threshold: 0.1 });
+        // 9. Inicialização
+        const observer = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }); }, { threshold: 0.1 });
         document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-
-        // Inicializar
-        carregarConteudoSite();
-
-// Feedback visual ao selecionar arquivo
-window.atualizarNomeArquivo = (input) => {
-    const label = document.getElementById('fileButtonLabel');
-    if (input.files && input.files[0]) {
-        label.innerHTML = `<i class="fas fa-check-circle"></i> ${input.files[0].name}`;
-        label.style.borderColor = 'var(--primary)';
-        label.style.background = 'var(--secondary)';
-    }
-};
-
-// Upload via Supabase Storage
-window.adicionarFoto = async () => {
-    const fileInput = document.getElementById('fotoFile');
-    const file = fileInput.files[0];
-    
-    if (!file) {
-        alert("Por favor, selecione uma imagem primeiro!");
-        return;
-    }
-
-    const btn = document.getElementById('btnAddFoto');
-    const textoOriginal = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-    btn.disabled = true;
-
-    try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `galeria/${fileName}`;
-
-        // Upload para o Storage
-        const { error: uploadError } = await supabase.storage
-            .from('imagens')
-            .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        // Pegar URL pública
-        const { data: { publicUrl } } = supabase.storage
-            .from('imagens')
-            .getPublicUrl(filePath);
-
-        // Salvar referência no Banco
-        const { error: dbError } = await supabase
-            .from('galeria')
-            .insert({ url: publicUrl });
-
-        if (dbError) throw dbError;
-
-        // Resetar input
-        fileInput.value = '';
-        document.getElementById('fileButtonLabel').innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Clique para selecionar uma foto';
-        document.getElementById('fileButtonLabel').style.borderColor = 'var(--primary)';
-        document.getElementById('fileButtonLabel').style.background = 'var(--light)';
         
-        carregarDados();
-        alert("Foto enviada com sucesso!");
-    } catch (error) {
-        console.error("Erro no upload:", error);
-        alert("Erro ao enviar a imagem. Verifique se o bucket 'imagens' existe no Supabase Storage.");
-    } finally {
-        btn.innerHTML = textoOriginal;
-        btn.disabled = false;
-    }
-};
-
+        // Carrega o conteúdo estático imediatamente
+        carregarConteudoSite(conteudoPadrao);
     </script>
 </body>
 </html>
