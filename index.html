@@ -335,7 +335,7 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // 2. Estado Global
-        let linkAgendaGlobal = "";
+        let linkAgendaGlobal = "https://calendar.app.google/yWvJ8cmEsgNFFnUa8";
         let dicasAtuais = [];
 
         const conteudoPadrao = {
@@ -382,12 +382,13 @@
 
         // 5. Carregar Dados do Supabase
         window.carregarDados = async () => {
-            // 5.1 Agenda
-            const { data: configAgenda } = await supabase.from('configuracoes').select('valor').eq('chave', 'agenda_link').maybeSingle();
-            if (configAgenda) {
-                linkAgendaGlobal = configAgenda.valor;
-                document.getElementById('agendaLinkInput').value = linkAgendaGlobal;
-            }
+           // 5.1 Agenda
+const { data: configAgenda } = await supabase.from('configuracoes').select('valor').eq('chave', 'agenda_link').maybeSingle();
+if (configAgenda) {
+    linkAgendaGlobal = configAgenda.valor;
+}
+// Isso garante que o campo no painel admin sempre mostre o link (o padrão ou o que estiver no banco)
+document.getElementById('agendaLinkInput').value = linkAgendaGlobal;
 
             // 5.2 Conteúdo Editável
             const { data: configConteudo } = await supabase.from('configuracoes').select('valor').eq('chave', 'conteudo_principal').maybeSingle();
