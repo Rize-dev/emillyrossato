@@ -23,110 +23,149 @@
 
     // ===== CARREGAR DADOS =====
     async function carregarDados() {
-        // 1. Configurações (Agenda)
-        const { data: configData } = await supabase
-            .from('configuracoes')
-            .select('valor')
-            .eq('chave', 'agenda_link')
-            .single();
-        
-        if (configData) {
-            linkAgendaGlobal = configData.valor;
-            document.getElementById('agendaLinkInput').value = linkAgendaGlobal;
-        }
-
-        // 2. Conteúdo Editável (Hero, Cuidados)
-        const { data: conteudoData } = await supabase
-            .from('configuracoes')
-            .select('valor')
-            .eq('chave', 'conteudo_principal')
-            .single();
-
-        let conteudo = conteudoData ? JSON.parse(conteudoData.valor) : conteudoPadrao;
-        
-        // Preenche os inputs do admin com os dados (mesma lógica de antes)
-        document.getElementById('edit-hero-titulo').value = conteudo.hero.titulo;
-        // ... (resto dos campos)
-
-        dicasAtuais = [...(conteudo.cuidados.dicas || [])];
-        renderizarDicasAdmin();
-        carregarConteudoSite(conteudo);
-
-        // 3. Galeria
-        const { data: galeriaData, error: galeriaError } = await supabase
-            .from('galeria')
-            .select('id, url')
-            .order('created_at', { ascending: false });
-
-        const galeriaGrid = document.getElementById('galeriaGrid');
-        const adminGaleria = document.getElementById('adminGaleriaList');
-        galeriaGrid.innerHTML = ''; adminGaleria.innerHTML = '';
-
-        if (!galeriaData || galeriaData.length === 0) {
-            galeriaGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--gray); padding: 40px;">Nenhuma foto ainda.</p>';
-        } else {
-            galeriaData.forEach(foto => {
-                galeriaGrid.innerHTML += `<div class="gallery-item fade-in visible"><img src="${foto.url}" alt="Trabalho"></div>`;
-                adminGaleria.innerHTML += `
-                    <div class="admin-item">
-                        <img src="${foto.url}">
-                        <small style="color: var(--gray); word-break: break-all; flex: 1;">${foto.url}</small>
-                        <button onclick="excluirFoto('${foto.id}')" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button>
-                    </div>`;
-            });
-        }
-
-        // 4. Serviços (Mesma lógica de fetch, substituindo Firebase por Supabase)
-        const { data: servicosData } = await supabase.from('servicos').select('*').order('created_at', { ascending: true });
-        // ... (renderização dos serviços no modal e no admin, idêntica à anterior)
+    // 1. Configurações (Agenda)
+    const { data: configAgenda } = await supabase
+        .from('configuracoes')
+        .select('valor')
+        .eq('chave', 'agenda_link')
+        .maybeSingle(); // <-- Mudança aqui
+    
+    if (configAgenda) {
+        linkAgendaGlobal = configAgenda.valor;
+        document.getElementById('agendaLinkInput').value = linkAgendaGlobal;
     }
 
-    // ===== UPLOAD DE IMAGEM (Supabase Storage) =====
-    window.adicionarFoto = async () => {
-        const fileInput = document.getElementById('fotoFile');
-        const file = fileInput.files[0];
-        if (!file) return alert("Selecione uma imagem.");
+    // 2. Conteúdo Editável (Hero, Cuidados)
+    const { data: configConteudo } = await supabase
+        .from('configuracoes')
+        .select('valor')
+        .eq('chave', 'conteudo_principal')
+        .maybeSingle(); // <-- Mudança aqui
 
-        const btn = document.getElementById('btnAddFoto');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-        btn.disabled = true;
-
+    let conteudo = conteudoPadrao;
+    if (configConteudo) {
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}.${fileExt}`;
-            const filePath = `galeria/${fileName}`;
-
-            // Upload para o Storage
-            const { error: uploadError } = await supabase.storage
-                .from('imagens')
-                .upload(filePath, file);
-
-            if (uploadError) throw uploadError;
-
-            // Pegar URL pública
-            const { data: { publicUrl } } = supabase.storage
-                .from('imagens')
-                .getPublicUrl(filePath);
-
-            // Salvar referência no Banco
-            const { error: dbError } = await supabase
-                .from('galeria')
-                .insert({ url: publicUrl });
-
-            if (dbError) throw dbError;
-
-            fileInput.value = '';
-            document.getElementById('fileButtonLabel').innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Clique para selecionar uma foto';
-            carregarDados();
-            alert("Foto enviada com sucesso!");
-        } catch (error) {
-            console.error("Erro no upload:", error);
-            alert("Erro ao enviar a imagem.");
-        } finally {
-            btn.innerHTML = '<i class="fas fa-plus"></i> Enviar Foto';
-            btn.disabled = false;
+            conteudo = JSON.parse(configConteudo.valor);
+        } catch (e) {
+            console.error("Erro ao parsear conteúdo:", e);
         }
-    };
+    } else {
+        // Se não existir, salva o padrão pela primeira vez
+        await supabase.from('configuracoes').insert({ 
+            chave: 'conteudo_principal', 
+            valor: JSON.stringify(conteudoPadrao) 
+        });
+    }
+    
+    // Preenche os inputs do admin
+    document.getElementById('edit-hero-titulo').value = conteudo.hero?.titulo || '';
+    document.getElementById('edit-hero-subtitulo').value = conteudo.hero?.subtitulo || '';
+    document.getElementById('edit-hero-botao').value = conteudo.hero?.botao || '';
+    document.getElementById('edit-cuidados-titulo').value = conteudo.cuidados?.titulo || '';
+    document.getElementById('edit-cuidados-subtitulo').value = conteudo.cuidados?.subtitulo || '';
+    document.getElementById('edit-cta-texto').value = conteudo.cuidados?.ctaTexto || '';
+    document.getElementById('edit-cta-botao').value = conteudo.cuidados?.ctaBotao || '';
+    
+    dicasAtuais = [...(conteudo.cuidados?.dicas || [])];
+    renderizarDicasAdmin();
+    carregarConteudoSite(conteudo);
+
+    // 3. Galeria
+    const { data: galeriaData } = await supabase
+        .from('galeria')
+        .select('id, url')
+        .order('created_at', { ascending: false });
+
+    const galeriaGrid = document.getElementById('galeriaGrid');
+    const adminGaleria = document.getElementById('adminGaleriaList');
+    galeriaGrid.innerHTML = ''; 
+    adminGaleria.innerHTML = '';
+
+    if (!galeriaData || galeriaData.length === 0) {
+        galeriaGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--gray); padding: 40px;">Nenhuma foto ainda. Adicione pelo Admin!</p>';
+        adminGaleria.innerHTML = '<p style="text-align: center; color: var(--gray);">Nenhuma foto cadastrada.</p>';
+    } else {
+        galeriaData.forEach(foto => {
+            galeriaGrid.innerHTML += `<div class="gallery-item fade-in visible"><img src="${foto.url}" alt="Trabalho"></div>`;
+            adminGaleria.innerHTML += `
+                <div class="admin-item">
+                    <img src="${foto.url}">
+                    <small style="color: var(--gray); word-break: break-all; flex: 1;">${foto.url}</small>
+                    <button onclick="excluirFoto('${foto.id}')" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button>
+                </div>`;
+        });
+    }
+
+    // 4. Serviços
+    const { data: servicosData } = await supabase
+        .from('servicos')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+    const modalServ = document.getElementById('modalServices');
+    const adminServ = document.getElementById('adminServicosList');
+    modalServ.innerHTML = ''; 
+    adminServ.innerHTML = '';
+
+    let servicos = servicosData || [];
+    
+    if (servicos.length === 0) {
+        // Insere os serviços iniciais se a tabela estiver vazia
+        const iniciais = [
+            { nome: "APLICAÇÃO ALONGAMENTO DE GEL ENCAPSULADO", preco: "170,00", duracao: "1 h 40 min", descricao: "" },
+            { nome: "APLICAÇÃO ALONGAMENTO DE GEL TRADICIONAL", preco: "165,00", duracao: "1 h 30 min", descricao: "" },
+            { nome: "APLICAÇÃO DE FIBRA DE VIDRO ENCAPSULADO", preco: "180,00", duracao: "1 h 55 min", descricao: "" },
+            { nome: "APLICAÇÃO DE FIBRA DE VIDRO TRADICIONAL", preco: "175,00", duracao: "1 h 40 min", descricao: "" },
+            { nome: "BANHO DE GEL ENCAPSULADO", preco: "120,00", duracao: "1 h 30 min", descricao: "" },
+            { nome: "BANHO DE GEL NOS PÉS", preco: "90,00", duracao: "1 h", descricao: "" },
+            { nome: "BANHO DE GEL TRADICIONAL", preco: "115,00", duracao: "1 h 30 min", descricao: "" },
+            { nome: "Concerto", preco: "10,00", duracao: "10 min", descricao: "" }
+        ];
+        await supabase.from('servicos').insert(iniciais);
+        servicos = iniciais;
+    }
+
+    modalServ.innerHTML = servicos.map(s => `
+        <div class="modal-service-item">
+            <div class="modal-service-content">
+                <div class="modal-service-title">${s.nome}</div>
+                <div class="modal-service-info">
+                    <span class="modal-service-price">R$ ${s.preco}</span>
+                    <span class="modal-service-duration">🕐 ${s.duracao}</span>
+                </div>
+            </div>
+            <div><input type="radio" name="servico" value="${s.nome}"></div>
+        </div>
+    `).join('');
+
+    adminServ.innerHTML = servicos.map(s => `
+        <div class="admin-item">
+            <div style="flex: 1;">
+                <strong>${s.nome}</strong><br>
+                <small style="color: var(--gray);">R$ ${s.preco} • ${s.duracao}</small>
+            </div>
+            <div>
+                <button onclick="editarServico('${s.id}','${s.nome}','${s.preco}','${s.duracao}')" class="btn-sm btn-edit"><i class="fas fa-edit"></i></button>
+                <button onclick="excluirServico('${s.id}')" class="btn-sm btn-delete"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Atualiza o site com o conteúdo
+function carregarConteudoSite(conteudo) {
+    if (!conteudo) return;
+    document.getElementById('hero-titulo').textContent = conteudo.hero?.titulo || '';
+    document.getElementById('hero-subtitulo').textContent = conteudo.hero?.subtitulo || '';
+    document.getElementById('hero-botao').textContent = conteudo.hero?.botao || '';
+    document.getElementById('cuidados-titulo').textContent = conteudo.cuidados?.titulo || '';
+    document.getElementById('cuidados-subtitulo').innerHTML = conteudo.cuidados?.subtitulo || '';
+    document.getElementById('cta-texto').textContent = conteudo.cuidados?.ctaTexto || '';
+    document.getElementById('cta-botao').textContent = conteudo.cuidados?.ctaBotao || '';
+    
+    const lista = document.getElementById('cuidados-lista');
+    lista.innerHTML = (conteudo.cuidados?.dicas || []).map(d => `<li><i class="fas fa-check-circle"></i> ${d}</li>`).join('');
+}
 
     // ===== SALVAR CONTEÚDO (Exemplo Hero) =====
     window.salvarHero = async () => {
