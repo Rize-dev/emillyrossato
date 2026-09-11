@@ -21,6 +21,31 @@
 
     // ... (mantenha toda a lógica de UI, abas e a função verificarSenha da Vercel que já funciona) ...
 
+// ===== DADOS PADRÃO (Declaração Global) =====
+const conteudoPadrao = {
+    hero: {
+        titulo: "Unhas Perfeitas, Confiança Inabalável",
+        subtitulo: "Especialista em Alongamento em Molde F1 e Fibra de Vidro com acabamento impecável",
+        botao: "Agende seu horário"
+    },
+    cuidados: {
+        titulo: "Dicas Essenciais",
+        subtitulo: "💅 Cuidados com suas Unhas",
+        dicas: [
+            "Não bater, roer ou forçar as unhas.",
+            "Evite usar as unhas como ferramentas.",
+            "Faça manutenção a cada 2 ou 4 semanas para prevenir fungos e bactérias.",
+            "Mantenha as unhas limpas e secas.",
+            "Não puxar nem tentar remover o alongamento em casa."
+        ],
+        ctaTexto: "✨ Quer conhecer todos os serviços e valores disponíveis? ✨",
+        ctaBotao: "Ver Lista de Serviços"
+    }
+};
+
+// ... (aqui vem a função carregarDados que usa essa variável)
+async function carregarDados() { ... }
+
     // ===== CARREGAR DADOS =====
     async function carregarDados() {
     // 1. Configurações (Agenda)
