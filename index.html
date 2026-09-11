@@ -613,6 +613,12 @@ function carregarConteudoSite(conteudo) {
             .admin-tabs { overflow-x: auto; flex-wrap: nowrap; }
             .admin-tab { white-space: nowrap; }
         }
+
+.file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
+.file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+.file-input-button { display: block; width: 100%; padding: 12px; background: var(--light); border: 2px dashed var(--primary); border-radius: 8px; text-align: center; color: var(--primary); font-weight: 500; transition: all 0.3s; }
+.file-input-wrapper:hover .file-input-button { background: var(--secondary); }
+
     </style>
 </head>
 <body>
@@ -650,22 +656,27 @@ function carregarConteudoSite(conteudo) {
     </section>
 
     <!-- GALERIA -->
-    <section class="gallery-section">
-        <div class="container">
-            <div class="section-title fade-in">
-                <span class="tag">Portfólio</span>
-                <h2 id="galeria-titulo">Meus Trabalhos</h2>
-                <div class="divider"></div>
-            </div>
-            <div class="gallery-grid" id="galeriaGrid"></div>
-            <div class="instagram-link fade-in">
-                <a href="https://www.instagram.com/nails.emillyr/" target="_blank">
-                    <i class="fab fa-instagram"></i> Veja mais no Instagram
-                </a>
+  <!-- ABA GALERIA -->
+<div id="aba-galeria" class="admin-card">
+    <h3><i class="fas fa-images" style="color: var(--primary);"></i> Gerenciar Galeria</h3>
+    <p style="color: var(--gray); font-size: 0.9rem; margin-bottom: 15px;">
+        Selecione uma foto do seu computador ou celular para enviar diretamente para o site.
+    </p>
+    <div class="form-group">
+        <label>Escolher Imagem</label>
+        <div class="file-input-wrapper">
+            <input type="file" id="fotoFile" accept="image/*" onchange="atualizarNomeArquivo(this)">
+            <div class="file-input-button" id="fileButtonLabel">
+                <i class="fas fa-cloud-upload-alt"></i> Clique para selecionar uma foto
             </div>
         </div>
-    </section>
-
+    </div>
+    <button onclick="adicionarFoto()" class="btn-add" id="btnAddFoto">
+        <i class="fas fa-plus"></i> Enviar Foto
+    </button>
+    <h4 style="margin: 25px 0 15px;">Fotos Cadastradas</h4>
+    <div id="adminGaleriaList" class="admin-list"></div>
+</div>
     <!-- FOOTER -->
     <footer class="footer">
         <div class="footer-logo" id="footer-logo">Emilly Rossato</div>
@@ -1168,6 +1179,73 @@ function carregarConteudoSite(conteudo) {
 
         // Inicializar
         carregarConteudoSite();
+
+// Feedback visual ao selecionar arquivo
+window.atualizarNomeArquivo = (input) => {
+    const label = document.getElementById('fileButtonLabel');
+    if (input.files && input.files[0]) {
+        label.innerHTML = `<i class="fas fa-check-circle"></i> ${input.files[0].name}`;
+        label.style.borderColor = 'var(--primary)';
+        label.style.background = 'var(--secondary)';
+    }
+};
+
+// Upload via Supabase Storage
+window.adicionarFoto = async () => {
+    const fileInput = document.getElementById('fotoFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert("Por favor, selecione uma imagem primeiro!");
+        return;
+    }
+
+    const btn = document.getElementById('btnAddFoto');
+    const textoOriginal = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+    btn.disabled = true;
+
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `galeria/${fileName}`;
+
+        // Upload para o Storage
+        const { error: uploadError } = await supabase.storage
+            .from('imagens')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // Pegar URL pública
+        const { data: { publicUrl } } = supabase.storage
+            .from('imagens')
+            .getPublicUrl(filePath);
+
+        // Salvar referência no Banco
+        const { error: dbError } = await supabase
+            .from('galeria')
+            .insert({ url: publicUrl });
+
+        if (dbError) throw dbError;
+
+        // Resetar input
+        fileInput.value = '';
+        document.getElementById('fileButtonLabel').innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Clique para selecionar uma foto';
+        document.getElementById('fileButtonLabel').style.borderColor = 'var(--primary)';
+        document.getElementById('fileButtonLabel').style.background = 'var(--light)';
+        
+        carregarDados();
+        alert("Foto enviada com sucesso!");
+    } catch (error) {
+        console.error("Erro no upload:", error);
+        alert("Erro ao enviar a imagem. Verifique se o bucket 'imagens' existe no Supabase Storage.");
+    } finally {
+        btn.innerHTML = textoOriginal;
+        btn.disabled = false;
+    }
+};
+
     </script>
 </body>
 </html>
